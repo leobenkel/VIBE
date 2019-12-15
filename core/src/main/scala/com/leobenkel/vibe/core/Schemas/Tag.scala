@@ -12,24 +12,17 @@ case class Tag(
   creationTimestamp: Date,
   updateTimestamp:   Date,
   name:              String
-) extends SchemaBase[ID] with Updatable[Tag] {
+) extends SchemaBase[ID] with Updatable[ID,Tag] {
   override def update(updateTimestamp: Date): Tag = {
     this.update(updateTimestamp = updateTimestamp)
   }
+
+  lazy final override val get:          Tag = this
+  lazy final override val getTableTool: TableRef[PK, Tag] = Tag
 }
 
 object Tag extends TableRef[ID, Tag] {
   override def getTableName: TABLE_NAME = "tags"
-
-  override def queryOne(id: ID): QueryZIO[Option[Tag]] = ???
-
-  override def querySeveral(id: Set[ID]): QueryZIO[Seq[Tag]] = ???
-
-  override def querySpecific(whereClause: WHERE_CLAUSE[Tag]): QueryZIO[Seq[Tag]] = ???
-
-  override def deleteRow(id: ID): QueryZIO[Boolean] = ???
-
-  override def insert(row: Tag): QueryZIO[Boolean] = ???
 
   def apply(name: String): ZIO[Any with Clock with Random, Nothing, Tag] =
     IdGenerator.generateId(name).map {

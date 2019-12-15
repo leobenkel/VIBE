@@ -1,5 +1,6 @@
 package com.leobenkel.vibe.core.Schemas
 
+import com.leobenkel.vibe.core.Schemas.Traits.Commentable.FOREIGN_ID
 import com.leobenkel.vibe.core.Schemas.Traits.{Commentable, SchemaBase, TableRef, Updatable}
 import com.leobenkel.vibe.core.Utils.SchemaTypes._
 import com.leobenkel.vibe.core.Services.Database
@@ -17,7 +18,7 @@ case class Comment(
   attachedToId:      Commentable.FOREIGN_ID,
   attachedToTable:   Commentable.FOREIGN_TABLE,
   commentIds:        Set[Comment.PK]
-) extends SchemaBase[ID] with Commentable with Updatable[Comment] {
+) extends SchemaBase[ID] with Commentable with Updatable[ID,Comment] {
   override def getTableName: TABLE_NAME = Comment.getTableName
 
   lazy final val getParent: ZIO[Any with Database, Any, Option[Commentable]] = {
@@ -32,20 +33,13 @@ case class Comment(
   override def update(updateTimestamp: Date): Comment = {
     this.update(updateTimestamp = updateTimestamp)
   }
+
+  lazy final override val get:          Comment = this
+  lazy final override val getTableTool: TableRef[PK, Comment] = Comment
 }
 
 object Comment extends TableRef[ID, Comment] {
   override def getTableName: TABLE_NAME = "comments"
-
-  override def queryOne(id: ID): QueryZIO[Option[Comment]] = ???
-
-  override def querySeveral(id: Set[ID]): QueryZIO[Seq[Comment]] = ???
-
-  override def querySpecific(whereClause: WHERE_CLAUSE[Comment]): QueryZIO[Seq[Comment]] = ???
-
-  override def deleteRow(id: ID): QueryZIO[Boolean] = ???
-
-  override def insert(row: Comment): QueryZIO[Boolean] = ???
 
   def apply(
     author:     User,

@@ -9,6 +9,7 @@ import zio.ZIO
 import zio.clock.Clock
 
 case class AllVotes(votes: Set[UserVotes]) {
+  lazy final override val toString: String = s"AllVote(${votes.mkString(";")})"
   @transient lazy final val size:   Int = this.votes.size
   @transient lazy final val length: Int = this.size
 
@@ -85,8 +86,9 @@ object AllVotes {
   def fetch(votable: Votable): QueryZIO[AllVotes] = {
     UserVotes
       .querySpecific(
-        s"${UserVotes.getTableName}.attachedToId = ${votable.id} " +
-          s"AND ${UserVotes.getTableName}.attachedToTable = ${votable.getTableName}"
+        v => votable.isSameVotable(v.attachedToId, v.attachedToTable)
+//        s"${UserVotes.getTableName}.attachedToId = ${votable.id} " +
+//          s"AND ${UserVotes.getTableName}.attachedToTable = ${votable.getTableName}"
       ).map(r => AllVotes(r.toSet))
   }
 

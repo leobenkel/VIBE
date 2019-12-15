@@ -6,7 +6,7 @@ import zio.ZIO
 object SchemaTypes {
   type ID = Long
   type Date = Long
-  type WHERE_CLAUSE[A] = String
+  type WHERE_CLAUSE[A] = A => Boolean
 
   type TABLE_NAME = String
   type QueryZIO[A] = ZIO[Any with Database, Throwable, A]

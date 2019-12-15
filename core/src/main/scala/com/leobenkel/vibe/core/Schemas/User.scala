@@ -16,12 +16,18 @@ case class User(
   email:             String,
   oauthToken:        OAuth,
   skills:            Set[Skill.PK]
-) extends SchemaBase[ID] with Updatable[User] {
+) extends SchemaBase[ID] with Updatable[ID, User] {
+  lazy final override val toString:     String = s"User(ID:$id, N:$name, E:$email, S:${skills.size})"
+  lazy final override val get:          User = this
+  lazy final override val getTableTool: TableRef[PK, User] = User
+
   @transient lazy val allIdeas: QueryZIO[Seq[Idea]] =
-    Idea.querySpecific(s"${Idea.getTableName}.author = ${this.id}")
+    Idea.querySpecific(_.authorId == this.id)
+//      s"${Idea.getTableName}.author = ${this.id}")
 
   @transient lazy val allEnrolled: QueryZIO[Seq[Idea]] =
-    Idea.querySpecific(s"contains(${Idea.getTableName}.enrolled, ${this.id})")
+    Idea.querySpecific(_.enrolledUserIds.contains(this.id))
+//      s"contains(${Idea.getTableName}.enrolled, ${this.id})")
 
   override def update(updateTimestamp: Date): User = {
     this.update(updateTimestamp = updateTimestamp)
@@ -32,16 +38,6 @@ object User extends TableRef[ID, User] {
   type OAuth = String
 
   override def getTableName: TABLE_NAME = "users"
-
-  override def queryOne(id: ID): QueryZIO[Option[User]] = ???
-
-  override def querySeveral(id: Set[ID]): QueryZIO[Seq[User]] = ???
-
-  override def querySpecific(whereClause: WHERE_CLAUSE[User]): QueryZIO[Seq[User]] = ???
-
-  override def deleteRow(id: ID): QueryZIO[Boolean] = ???
-
-  override def insert(row: User): QueryZIO[Boolean] = ???
 
   def apply(
     name:       String,

@@ -19,7 +19,11 @@ case class Idea(
   enrolledUserIds:   Set[User.PK],
   tagsIds:           Set[Tag.PK],
   commentIds:        Set[Comment.PK]
-) extends SchemaBase[ID] with Commentable with Votable with Updatable[Idea] {
+) extends SchemaBase[ID] with Commentable with Votable with Updatable[ID, Idea] {
+  lazy final override val toString: String = s"Idea(ID:$id, T:'$title', A:$authorId, " +
+    s"E:${enrolledUserIds.size}, T:${tagsIds.size}, C:${commentIds.size})"
+  lazy final override val get:          Idea = this
+  lazy final override val getTableTool: TableRef[PK, Idea] = Idea
   @transient lazy val score: ZIO[Any with Database, Throwable, Int] =
     votes.flatMap(_.score).map(_ + 1)
 
@@ -69,16 +73,6 @@ case class Idea(
 
 object Idea extends TableRef[ID, Idea] {
   override def getTableName: TABLE_NAME = "ideas"
-
-  override def queryOne(id: ID): QueryZIO[Option[Idea]] = ???
-
-  override def querySeveral(id: Set[ID]): QueryZIO[Seq[Idea]] = ???
-
-  override def querySpecific(whereClause: WHERE_CLAUSE[Idea]): QueryZIO[Seq[Idea]] = ???
-
-  override def deleteRow(id: core.Schemas.Idea.PK): QueryZIO[Boolean] = ???
-
-  override def insert(row: Idea): QueryZIO[Boolean] = ???
 
   def apply(
     title:       String,
