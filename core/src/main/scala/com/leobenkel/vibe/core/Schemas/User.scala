@@ -1,8 +1,7 @@
 package com.leobenkel.vibe.core.Schemas
 
-import com.leobenkel.vibe.core.Schemas.Traits.SchemaBase._
-import com.leobenkel.vibe.core.Schemas.Traits.TableRef.TABLE_NAME
-import com.leobenkel.vibe.core.Schemas.Traits.{SchemaBase, TableRef}
+import com.leobenkel.vibe.core.Utils.SchemaTypes._
+import com.leobenkel.vibe.core.Schemas.Traits.{SchemaBase, TableRef, Updatable}
 import com.leobenkel.vibe.core.Schemas.User.OAuth
 import com.leobenkel.vibe.core.Utils.IdGenerator
 import zio.ZIO
@@ -17,7 +16,7 @@ case class User(
   email:             String,
   oauthToken:        OAuth,
   jobTitle:          JobTitle.PK
-) extends SchemaBase[User, ID] {
+) extends SchemaBase[ID] with Updatable[User] {
   @transient lazy val allIdeas: QueryZIO[Seq[Idea]] =
     Idea.querySpecific(s"${Idea.getTableName}.author = ${this.id}")
 

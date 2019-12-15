@@ -1,6 +1,6 @@
 package com.leobenkel.vibe.core.Schemas.Collections
 
-import com.leobenkel.vibe.core.Schemas.Traits.SchemaBase.QueryZIO
+import com.leobenkel.vibe.core.Utils.SchemaTypes._
 import com.leobenkel.vibe.core.Schemas.Traits.Votable
 import com.leobenkel.vibe.core.Schemas.{User, UserVotes}
 import com.leobenkel.vibe.core.Services.Database
@@ -110,12 +110,12 @@ object AllVotes {
   }
 
   case class Add(vote: UserVotes) extends Operation {
-    override def act: QueryZIO[Boolean] = UserVotes.insert(vote)
+    override def act:  QueryZIO[Boolean] = UserVotes.insert(vote)
     override def name: String = "ADD"
   }
 
   case class Delete(vote: UserVotes) extends Operation {
-    override def act: QueryZIO[Boolean] = UserVotes.deleteRow(vote.id)
+    override def act:  QueryZIO[Boolean] = UserVotes.deleteRow(vote.id)
     override def name: String = "DELETE"
   }
 }

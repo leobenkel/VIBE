@@ -1,8 +1,7 @@
 package com.leobenkel.vibe.core.Schemas
 
-import com.leobenkel.vibe.core.Schemas.Traits.{Commentable, SchemaBase, TableRef}
-import com.leobenkel.vibe.core.Schemas.Traits.SchemaBase._
-import com.leobenkel.vibe.core.Schemas.Traits.TableRef.TABLE_NAME
+import com.leobenkel.vibe.core.Schemas.Traits.{Commentable, SchemaBase, TableRef, Updatable}
+import com.leobenkel.vibe.core.Utils.SchemaTypes._
 import com.leobenkel.vibe.core.Services.Database
 import com.leobenkel.vibe.core.Utils.IdGenerator
 import zio.ZIO
@@ -18,7 +17,7 @@ case class Comment(
   attachedToId:      Commentable.FOREIGN_ID,
   attachedToTable:   Commentable.FOREIGN_TABLE,
   commentIds:        Set[Comment.PK]
-) extends SchemaBase[Comment, ID] with Commentable {
+) extends SchemaBase[ID] with Commentable with Updatable[Comment] {
   override def getTableName: TABLE_NAME = Comment.getTableName
 
   lazy final val getParent: ZIO[Any with Database, Any, Option[Commentable]] = {

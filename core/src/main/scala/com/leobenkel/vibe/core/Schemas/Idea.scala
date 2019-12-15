@@ -1,8 +1,7 @@
 package com.leobenkel.vibe.core.Schemas
 
 import com.leobenkel.vibe.core
-import com.leobenkel.vibe.core.Schemas.Traits.SchemaBase._
-import com.leobenkel.vibe.core.Schemas.Traits.TableRef.TABLE_NAME
+import com.leobenkel.vibe.core.Utils.SchemaTypes._
 import com.leobenkel.vibe.core.Schemas.Traits._
 import com.leobenkel.vibe.core.Services.Database
 import com.leobenkel.vibe.core.Utils.IdGenerator
@@ -20,7 +19,7 @@ case class Idea(
   enrolledUserIds:   Set[User.PK],
   tagsIds:           Set[Tag.PK],
   commentIds:        Set[Comment.PK]
-) extends SchemaBase[Idea, ID] with Commentable with Votable {
+) extends SchemaBase[ID] with Commentable with Votable with Updatable[Idea] {
   @transient lazy val score: ZIO[Any with Database, Throwable, Int] =
     votes.flatMap(_.score).map(_ + 1)
 

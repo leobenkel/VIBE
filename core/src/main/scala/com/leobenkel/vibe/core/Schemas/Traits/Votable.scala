@@ -1,7 +1,7 @@
 package com.leobenkel.vibe.core.Schemas.Traits
 
 import com.leobenkel.vibe.core.Schemas.Collections.AllVotes
-import com.leobenkel.vibe.core.Schemas.Traits.SchemaBase.{ID, QueryZIO}
+import com.leobenkel.vibe.core.Utils.SchemaTypes._
 import com.leobenkel.vibe.core.Schemas._
 import com.leobenkel.vibe.core.Services.Database
 import com.leobenkel.vibe.core.Utils.DatabaseException
@@ -19,7 +19,7 @@ trait Votable extends ForeignAssociation[Votable.FOREIGN_ID] {
 
   def isSameVotable(
     otherId:    PRIMARY_KEY,
-    otherTable: TableRef.TABLE_NAME
+    otherTable: TABLE_NAME
   ): Boolean = {
     this.id == otherId && this.getTableName == otherTable
   }
@@ -65,7 +65,8 @@ trait Votable extends ForeignAssociation[Votable.FOREIGN_ID] {
       .flatMap(executeOperations)
   }
 }
+
 object Votable {
   type FOREIGN_ID = ID
-  type FOREIGN_TABLE = TableRef.TABLE_NAME
+  type FOREIGN_TABLE = TABLE_NAME
 }

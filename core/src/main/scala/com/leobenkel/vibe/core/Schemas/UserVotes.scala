@@ -1,7 +1,6 @@
 package com.leobenkel.vibe.core.Schemas
 
-import com.leobenkel.vibe.core.Schemas.Traits.SchemaBase._
-import com.leobenkel.vibe.core.Schemas.Traits.TableRef.TABLE_NAME
+import com.leobenkel.vibe.core.Utils.SchemaTypes._
 import com.leobenkel.vibe.core.Schemas.Traits._
 import com.leobenkel.vibe.core.Services.Database
 import com.leobenkel.vibe.core.Utils.{IdGenerator, VoteValue}
@@ -15,7 +14,8 @@ case class UserVotes(
   attachedToId:      Votable.FOREIGN_ID,
   attachedToTable:   Votable.FOREIGN_TABLE,
   vote:              Int
-) extends SchemaBase[UserVotes, (User.PK, Votable.FOREIGN_ID, Votable.FOREIGN_TABLE)] {
+) extends SchemaBase[(User.PK, Votable.FOREIGN_ID, Votable.FOREIGN_TABLE)]
+    with Updatable[UserVotes] {
   @transient lazy val realVote: IO[RuntimeException, VoteValue] = VoteValue.parse(vote)
   @transient lazy val user:     QueryZIO[Option[User]] = User.queryOne(userId)
 
