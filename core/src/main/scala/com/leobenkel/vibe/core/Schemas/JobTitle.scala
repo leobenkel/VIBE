@@ -14,8 +14,8 @@ case class JobTitle(
   updateTimestamp:   Date,
   name:              String
 ) extends SchemaBase[JobTitle, ID] {
-  override def copy(updateTimestamp: Date): JobTitle = {
-    this.copy(updateTimestamp = updateTimestamp)
+  override def update(updateTimestamp: Date): JobTitle = {
+    this.update(updateTimestamp = updateTimestamp)
   }
 }
 

@@ -1,16 +1,16 @@
 package com.leobenkel.vibe.core.Schemas.Traits
 
-import SchemaBase.{ID, QueryZIO}
 import com.leobenkel.vibe.core.Schemas.Collections.AllVotes
+import com.leobenkel.vibe.core.Schemas.Traits.SchemaBase.{ID, QueryZIO}
 import com.leobenkel.vibe.core.Schemas._
 import com.leobenkel.vibe.core.Services.Database
-import com.leobenkel.vibe.core.Utils.{DatabaseException, VoteValue}
+import com.leobenkel.vibe.core.Utils.DatabaseException
 import zio.ZIO
 import zio.clock.Clock
 
 trait Votable extends ForeignAssociation[Votable.FOREIGN_ID] {
   private type PRIMARY_KEY = Votable.FOREIGN_ID
-  def voteIds: Set[UserVotes.PK]
+
   @transient lazy final val votes: QueryZIO[AllVotes] = AllVotes.fetch(this)
 
   def isSameVotable(other: Votable): Boolean = {
@@ -24,41 +24,45 @@ trait Votable extends ForeignAssociation[Votable.FOREIGN_ID] {
     this.id == otherId && this.getTableName == otherTable
   }
 
- def refreshTimestamp: ZIO[Any with Clock, Nothing, Votable]
+  def refreshTimestamp: ZIO[Any with Clock, Nothing, Votable]
 
-  def executeOperations(operations : Seq[AllVotes.Operation]) = {
-    AllVotes.execute(operations).map{
+  private def executeOperations(
+    operations: Seq[AllVotes.Operation]
+  ): ZIO[Any with Clock with Database, Throwable, Votable] = {
+    AllVotes.execute(operations).flatMap {
       case true => this.refreshTimestamp
-      case false => ZIO.fail(DatabaseException(s"One or more of the following operations have failed: ${operations.mkString(", ")}") )
+      case false =>
+        ZIO.fail(
+          DatabaseException(
+            s"One or more of the following operations " +
+              s"have failed: ${operations.mkString(", ")}"
+          )
+        )
     }
   }
 
-  def voteUpBy(user: User): ZIO[Any with Clock with Database, Throwable, Seq[AllVotes.Operation]] = {
-    this.votes.flatMap(_.voteUpBy(user, this))
+  def voteUpBy(user: User): ZIO[Any with Clock with Database, Throwable, Votable] = {
+    this.votes
+      .flatMap(_.voteUpBy(user, this))
+      .flatMap(executeOperations)
   }
 
-  def voteDownBy(user: User): Idea = {
-    if (isAuthor(user)) {
-      this
-    } else {
-      this.copy(votes = this.votes.voteDownBy(user))
-    }
+  def voteDownBy(user: User): ZIO[Any with Clock with Database, Throwable, Votable] = {
+    this.votes
+      .flatMap(_.voteDownBy(user, this))
+      .flatMap(executeOperations)
   }
 
-  def unVoteUp(user: User): Idea = {
-    if (isAuthor(user)) {
-      this
-    } else {
-      this.copy(votes = this.votes.unVoteUp(user))
-    }
+  def unVoteUp(user: User): ZIO[Any with Clock with Database, Throwable, Votable] = {
+    this.votes
+      .flatMap(_.unVote(user, this))
+      .flatMap(executeOperations)
   }
 
-  def unVoteDown(user: User): Idea = {
-    if (authorIds == user) {
-      this
-    } else {
-      this.copy(votes = this.votes.unVoteDown(user))
-    }
+  def unVoteDown(user: User): ZIO[Any with Clock with Database, Throwable, Votable] = {
+    this.votes
+      .flatMap(_.unVote(user, this))
+      .flatMap(executeOperations)
   }
 }
 object Votable {

@@ -24,8 +24,8 @@ case class User(
   @transient lazy val allEnrolled: QueryZIO[Seq[Idea]] =
     Idea.querySpecific(s"contains(${Idea.getTableName}.enrolled, ${this.id})")
 
-  override def copy(updateTimestamp: Date): User = {
-    this.copy(updateTimestamp = updateTimestamp)
+  override def update(updateTimestamp: Date): User = {
+    this.update(updateTimestamp = updateTimestamp)
   }
 }
 

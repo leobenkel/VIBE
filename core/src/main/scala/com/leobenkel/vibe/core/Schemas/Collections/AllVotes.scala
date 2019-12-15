@@ -74,7 +74,7 @@ case class AllVotes(votes: Set[UserVotes]) {
       unVoteOp :+ AllVotes.Add(newVote)
     }
 
-  private def unVote(
+  def unVote(
     user:    User,
     votable: Votable
   ): ZIO[Any, RuntimeException, Seq[AllVotes.Operation]] =

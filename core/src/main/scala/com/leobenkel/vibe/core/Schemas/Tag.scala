@@ -14,8 +14,8 @@ case class Tag(
   updateTimestamp:   Date,
   name:              String
 ) extends SchemaBase[Tag, ID] {
-  override def copy(updateTimestamp: Date): Tag = {
-    this.copy(updateTimestamp = updateTimestamp)
+  override def update(updateTimestamp: Date): Tag = {
+    this.update(updateTimestamp = updateTimestamp)
   }
 }
 

@@ -1,14 +1,14 @@
 package com.leobenkel.vibe.core.Schemas
 
-import com.leobenkel.vibe.core.Schemas
-import com.leobenkel.vibe.core.Schemas.Traits.{Commentable, SchemaBase, TableRef, Votable}
+import com.leobenkel.vibe.core
 import com.leobenkel.vibe.core.Schemas.Traits.SchemaBase._
 import com.leobenkel.vibe.core.Schemas.Traits.TableRef.TABLE_NAME
+import com.leobenkel.vibe.core.Schemas.Traits._
 import com.leobenkel.vibe.core.Services.Database
 import com.leobenkel.vibe.core.Utils.IdGenerator
-import zio.ZIO
 import zio.clock.Clock
 import zio.random.Random
+import zio.{UIO, ZIO}
 
 case class Idea(
   id:                ID,
@@ -20,49 +20,47 @@ case class Idea(
   enrolledUserIds:   Set[User.PK],
   tagsIds:           Set[Tag.PK],
   commentIds:        Set[Comment.PK]
-) extends SchemaBase[ID] with Commentable with Votable {
+) extends SchemaBase[Idea, ID] with Commentable with Votable {
   @transient lazy val score: ZIO[Any with Database, Throwable, Int] =
     votes.flatMap(_.score).map(_ + 1)
 
   @transient lazy val getAuthor: QueryZIO[Option[User]] = User.queryOne(authorId)
 
-  @transient lazy val tags:  QueryZIO[Seq[Tag]] = Tag.querySeveral(tagsIds)
+  @transient lazy val tags: QueryZIO[Seq[Tag]] = Tag.querySeveral(tagsIds)
 
   def isAuthor(user: User): ZIO[Any with Database, Throwable, Boolean] =
     this.getAuthor.map(_.exists(_ == user))
-  def addTag(tag:    Tag):  Idea = this.copy(tagsIds = this.tagsIds + tag)
-  def enroll(user:   User): Idea = this.copy(enrolledUserIds = this.enrolledUserIds + user)
-  def unEnroll(user: User): Idea = this.copy(enrolledUserIds = this.enrolledUserIds - user)
+  def addTag(tag:         Tag):  Idea = this.copy(tagsIds = this.tagsIds + tag.id)
+  def enroll(user:        User): Idea = this.copy(enrolledUserIds = this.enrolledUserIds + user.id)
+  def unEnroll(user:      User): Idea = this.copy(enrolledUserIds = this.enrolledUserIds - user.id)
+  override def update(ts: Date): Idea = copy(updateTimestamp = ts)
+  override def getTableName: TABLE_NAME = Idea.getTableName
 
-  def voteUpBy(user: User): Idea = {
-    if (isAuthor(user)) {
-      this
-    } else {
-      this.copy(votes = this.votes.voteUpBy(user))
+  override def voteUpBy(user: User): ZIO[Any with Clock with Database, Throwable, Idea] = {
+    isAuthor(user).flatMap {
+      case true  => UIO(this)
+      case false => super.voteUpBy(user).map(_.asInstanceOf[Idea])
     }
   }
 
-  def voteDownBy(user: User): Idea = {
-    if (isAuthor(user)) {
-      this
-    } else {
-      this.copy(votes = this.votes.voteDownBy(user))
+  override def voteDownBy(user: User): ZIO[Any with Clock with Database, Throwable, Idea] = {
+    isAuthor(user).flatMap {
+      case true  => UIO(this)
+      case false => super.voteDownBy(user).map(_.asInstanceOf[Idea])
     }
   }
 
-  def unVoteUp(user: User): Idea = {
-    if (isAuthor(user)) {
-      this
-    } else {
-      this.copy(votes = this.votes.unVoteUp(user))
+  override def unVoteDown(user: User): ZIO[Any with Clock with Database, Throwable, Votable] = {
+    isAuthor(user).flatMap {
+      case true  => UIO(this)
+      case false => super.unVoteDown(user).map(_.asInstanceOf[Idea])
     }
   }
 
-  def unVoteDown(user: User): Idea = {
-    if (authorIds == user) {
-      this
-    } else {
-      this.copy(votes = this.votes.unVoteDown(user))
+  override def unVoteUp(user: User): ZIO[Any with Clock with Database, Throwable, Votable] = {
+    isAuthor(user).flatMap {
+      case true  => UIO(this)
+      case false => super.unVoteUp(user)
     }
   }
 }
@@ -75,6 +73,10 @@ object Idea extends TableRef[ID, Idea] {
   override def querySeveral(id: Set[ID]): QueryZIO[Seq[Idea]] = ???
 
   override def querySpecific(whereClause: WHERE_CLAUSE[Idea]): QueryZIO[Seq[Idea]] = ???
+
+  override def deleteRow(id: core.Schemas.Idea.PK): QueryZIO[Boolean] = ???
+
+  override def insert(row: Idea): QueryZIO[Boolean] = ???
 
   def apply(
     title:       String,
@@ -97,4 +99,5 @@ object Idea extends TableRef[ID, Idea] {
         )
     }
   }
+
 }

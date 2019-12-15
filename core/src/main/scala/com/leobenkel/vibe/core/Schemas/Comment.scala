@@ -30,8 +30,8 @@ case class Comment(
       ).flatten
   }
 
-  override def copy(updateTimestamp: Date): Comment = {
-    this.copy(updateTimestamp = updateTimestamp)
+  override def update(updateTimestamp: Date): Comment = {
+    this.update(updateTimestamp = updateTimestamp)
   }
 }
 

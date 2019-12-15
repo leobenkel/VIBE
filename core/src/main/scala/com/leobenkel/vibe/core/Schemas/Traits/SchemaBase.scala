@@ -9,7 +9,7 @@ import zio.ZIO
 import zio.clock.Clock
 
 trait SchemaBase[SELF, PRIMARY_KEY] {
-  def copy(updateTimestamp: Date): SELF
+  def update(updateTimestamp: Date): SELF
 
   type PK = PRIMARY_KEY
   def id:                PRIMARY_KEY
@@ -18,7 +18,7 @@ trait SchemaBase[SELF, PRIMARY_KEY] {
   def updateTimestamp: Date
 
   final def refreshTimestamp: ZIO[Any with Clock, Nothing, SELF] =
-    IdGenerator.getNowTime.map(ts => this.copy(updateTimestamp = ts))
+    IdGenerator.getNowTime.map(ts => this.update(updateTimestamp = ts))
 }
 
 object SchemaBase {
@@ -29,14 +29,14 @@ object SchemaBase {
   type QueryZIO[A] = ZIO[Any with Database, Throwable, A]
 }
 
-trait TableRef[PRIMARY_KEY, ROW_TYPE <: SchemaBase[PRIMARY_KEY]] {
+trait TableRef[PRIMARY_KEY, ROW_TYPE <: SchemaBase[ROW_TYPE, PRIMARY_KEY]] {
   type PK = PRIMARY_KEY
   def getTableName: TABLE_NAME
-  final def getId(row:           ROW_TYPE): PRIMARY_KEY = row.id
-  def queryOne(id:               PRIMARY_KEY): QueryZIO[Option[ROW_TYPE]]
-  def querySeveral(id:           Set[PRIMARY_KEY]): QueryZIO[Seq[ROW_TYPE]]
+  final def getId(row:           ROW_TYPE): PK = row.id
+  def queryOne(id:               PK): QueryZIO[Option[ROW_TYPE]]
+  def querySeveral(id:           Set[PK]): QueryZIO[Seq[ROW_TYPE]]
   def querySpecific(whereClause: WHERE_CLAUSE[ROW_TYPE]): QueryZIO[Seq[ROW_TYPE]]
-  def deleteRow(id:              PRIMARY_KEY): QueryZIO[Boolean]
+  def deleteRow(id:              PK): QueryZIO[Boolean]
   def insert(row:                ROW_TYPE): QueryZIO[Boolean]
 }
 
