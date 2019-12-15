@@ -60,6 +60,15 @@ object UserVotes extends TableRef[(User.PK, Votable.FOREIGN_ID, Votable.FOREIGN_
 
   override def insert(row: UserVotes): QueryZIO[Boolean] = ???
 
+  def makePk(
+    user:    User,
+    votable: Votable
+  ): PK = (
+    user.id,
+    votable.id,
+    votable.getTableName
+  )
+
   def apply(
     user:    User,
     votable: Votable,

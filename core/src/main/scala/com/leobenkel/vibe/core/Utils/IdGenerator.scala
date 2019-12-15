@@ -18,7 +18,8 @@ object IdGenerator {
       seed <- ZIO.accessM[Random](_.random.nextLong)
       ts   <- getNowTime
     } yield {
-      ((seed.toString + item.hashCode.toString + ts.toString).toLong, ts)
+      val concatId: Long = seed * item.hashCode * ts
+      (concatId.toLong, ts)
     }
   }
 }

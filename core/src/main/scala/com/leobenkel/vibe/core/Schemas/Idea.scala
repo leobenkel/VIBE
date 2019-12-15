@@ -27,8 +27,7 @@ case class Idea(
 
   @transient lazy val tags: QueryZIO[Seq[Tag]] = Tag.querySeveral(tagsIds)
 
-  def isAuthor(user: User): ZIO[Any with Database, Throwable, Boolean] =
-    this.getAuthor.map(_.exists(_ == user))
+  def isAuthor(user:      User): Boolean = user.id == authorId
   def addTag(tag:         Tag):  Idea = this.copy(tagsIds = this.tagsIds + tag.id)
   def enroll(user:        User): Idea = this.copy(enrolledUserIds = this.enrolledUserIds + user.id)
   def unEnroll(user:      User): Idea = this.copy(enrolledUserIds = this.enrolledUserIds - user.id)
@@ -36,30 +35,34 @@ case class Idea(
   override def getTableName: TABLE_NAME = Idea.getTableName
 
   override def voteUpBy(user: User): ZIO[Any with Clock with Database, Throwable, Idea] = {
-    isAuthor(user).flatMap {
-      case true  => UIO(this)
-      case false => super.voteUpBy(user).map(_.asInstanceOf[Idea])
+    if (isAuthor(user)) {
+      UIO(this)
+    } else {
+      super.voteUpBy(user).map(_.asInstanceOf[Idea])
     }
   }
 
   override def voteDownBy(user: User): ZIO[Any with Clock with Database, Throwable, Idea] = {
-    isAuthor(user).flatMap {
-      case true  => UIO(this)
-      case false => super.voteDownBy(user).map(_.asInstanceOf[Idea])
+    if (isAuthor(user)) {
+      UIO(this)
+    } else {
+      super.voteDownBy(user).map(_.asInstanceOf[Idea])
     }
   }
 
   override def unVoteDown(user: User): ZIO[Any with Clock with Database, Throwable, Votable] = {
-    isAuthor(user).flatMap {
-      case true  => UIO(this)
-      case false => super.unVoteDown(user).map(_.asInstanceOf[Idea])
+    if (isAuthor(user)) {
+      UIO(this)
+    } else {
+      super.unVoteDown(user).map(_.asInstanceOf[Idea])
     }
   }
 
   override def unVoteUp(user: User): ZIO[Any with Clock with Database, Throwable, Votable] = {
-    isAuthor(user).flatMap {
-      case true  => UIO(this)
-      case false => super.unVoteUp(user)
+    if (isAuthor(user)) {
+      UIO(this)
+    } else {
+      super.unVoteUp(user)
     }
   }
 }

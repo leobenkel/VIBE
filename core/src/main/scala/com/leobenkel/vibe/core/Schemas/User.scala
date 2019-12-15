@@ -15,7 +15,7 @@ case class User(
   name:              String,
   email:             String,
   oauthToken:        OAuth,
-  jobTitle:          JobTitle.PK
+  skills:            Set[Skill.PK]
 ) extends SchemaBase[ID] with Updatable[User] {
   @transient lazy val allIdeas: QueryZIO[Seq[Idea]] =
     Idea.querySpecific(s"${Idea.getTableName}.author = ${this.id}")
@@ -47,11 +47,11 @@ object User extends TableRef[ID, User] {
     name:       String,
     email:      String,
     oauthToken: OAuth,
-    jobTitle:   JobTitle
+    skills:     Set[Skill]
   ): ZIO[Any with Clock with Random, Nothing, User] =
-    IdGenerator.generateId((name, email, oauthToken, jobTitle.id)).map {
+    IdGenerator.generateId((name, email, oauthToken, skills.map(_.id).mkString(", "))).map {
       case (id, date) =>
-        User(id, date, date, name, email, oauthToken, jobTitle.id)
+        User(id, date, date, name, email, oauthToken, skills.map(_.id))
     }
 
 }

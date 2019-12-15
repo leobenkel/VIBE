@@ -23,12 +23,6 @@ case class AllVotes(votes: Set[UserVotes]) {
     vDown <- voteDown
   } yield { vUp.size - vDown.size }
 
-//  def find(
-//    user:    User,
-//    votable: Votable
-//  ): Option[UserVotes] =
-//    votes.find(_.isSpecificOne(user, votable))
-
   def hasVoted(
     user:    User,
     votable: Votable
@@ -51,16 +45,17 @@ case class AllVotes(votes: Set[UserVotes]) {
     votable: Votable
   ): ZIO[Any, RuntimeException, Option[UserVotes]] =
     this.voteDown.map(_.find(_.isTheVoter(user)))
+}
 
+object AllVotes {
   def voteUpBy(
     user:    User,
     votable: Votable
   ): ZIO[Any with Clock, RuntimeException, Seq[AllVotes.Operation]] =
     for {
-      unVoteOp <- unVote(user, votable)
-      newVote  <- UserVotes(user, votable, VoteValue.VoteUp)
+      newVote <- UserVotes(user, votable, VoteValue.VoteUp)
     } yield {
-      unVoteOp :+ AllVotes.Add(newVote)
+      unVote(user, votable) :+ AllVotes.Add(newVote)
     }
 
   def voteDownBy(
@@ -68,28 +63,22 @@ case class AllVotes(votes: Set[UserVotes]) {
     votable: Votable
   ): ZIO[Any with Clock, RuntimeException, Seq[AllVotes.Operation]] =
     for {
-      unVoteOp <- unVote(user, votable)
-      newVote  <- UserVotes(user, votable, VoteValue.VoteDown)
+      newVote <- UserVotes(user, votable, VoteValue.VoteDown)
     } yield {
-      unVoteOp :+ AllVotes.Add(newVote)
+      unVote(user, votable) :+ AllVotes.Add(newVote)
     }
 
   def unVote(
     user:    User,
     votable: Votable
-  ): ZIO[Any, RuntimeException, Seq[AllVotes.Operation]] =
-    this.hasVoted(user, votable).map {
-      case None               => Seq.empty[AllVotes.Operation]
-      case Some(previousVote) => Seq(AllVotes.Delete(previousVote))
-    }
-}
+  ): Seq[AllVotes.Operation] =
+    Seq(AllVotes.Delete(UserVotes.makePk(user, votable)))
 
-object AllVotes {
   def execute(operations: Seq[Operation]): ZIO[Any with Database, Throwable, Boolean] = {
     ZIO
       .sequence(operations.map {
-        case Add(vote)    => UserVotes.insert(vote)
-        case Delete(vote) => UserVotes.deleteRow(vote.id)
+        case Add(vote) => UserVotes.insert(vote)
+        case d: Delete => UserVotes.deleteRow(d.vote)
       }).map(_.reduce(_ || _))
   }
 
@@ -102,7 +91,6 @@ object AllVotes {
   }
 
   sealed trait Operation {
-    def vote: UserVotes
     def act:  QueryZIO[Boolean]
     def name: String
 
@@ -114,8 +102,8 @@ object AllVotes {
     override def name: String = "ADD"
   }
 
-  case class Delete(vote: UserVotes) extends Operation {
-    override def act:  QueryZIO[Boolean] = UserVotes.deleteRow(vote.id)
+  case class Delete(vote: UserVotes.PK) extends Operation {
+    override def act:  QueryZIO[Boolean] = UserVotes.deleteRow(vote)
     override def name: String = "DELETE"
   }
 }

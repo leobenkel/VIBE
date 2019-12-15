@@ -7,34 +7,34 @@ import zio.ZIO
 import zio.clock.Clock
 import zio.random.Random
 
-case class JobTitle(
+case class Skill(
   id:                ID,
   creationTimestamp: Date,
   updateTimestamp:   Date,
   name:              String
-) extends SchemaBase[ID] with Updatable[JobTitle] {
-  override def update(updateTimestamp: Date): JobTitle = {
+) extends SchemaBase[ID] with Updatable[Skill] {
+  override def update(updateTimestamp: Date): Skill = {
     this.update(updateTimestamp = updateTimestamp)
   }
 }
 
-object JobTitle extends TableRef[ID, JobTitle] {
+object Skill extends TableRef[ID, Skill] {
   override def getTableName: TABLE_NAME = "job_titles"
 
-  override def queryOne(id: ID): QueryZIO[Option[JobTitle]] = ???
+  override def queryOne(id: ID): QueryZIO[Option[Skill]] = ???
 
-  override def querySeveral(id: Set[ID]): QueryZIO[Seq[JobTitle]] = ???
+  override def querySeveral(id: Set[ID]): QueryZIO[Seq[Skill]] = ???
 
-  override def querySpecific(whereClause: WHERE_CLAUSE[JobTitle]): QueryZIO[Seq[JobTitle]] = ???
+  override def querySpecific(whereClause: WHERE_CLAUSE[Skill]): QueryZIO[Seq[Skill]] = ???
 
   override def deleteRow(id: ID): QueryZIO[Boolean] = ???
 
-  override def insert(row: JobTitle): QueryZIO[Boolean] = ???
+  override def insert(row: Skill): QueryZIO[Boolean] = ???
 
-  def apply(name: String): ZIO[Any with Clock with Random, Nothing, JobTitle] =
+  def apply(name: String): ZIO[Any with Clock with Random, Nothing, Skill] =
     IdGenerator.generateId(name).map {
       case (id, date) =>
-        JobTitle(
+        Skill(
           id = id,
           creationTimestamp = date,
           updateTimestamp = date,

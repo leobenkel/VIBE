@@ -1,7 +1,7 @@
 package com.leobenkel.vibe.core.Schemas.Traits
 
 import com.leobenkel.vibe.core.Utils.SchemaTypes._
-import com.leobenkel.vibe.core.Schemas.{Comment, Idea, JobTitle, Tag, User, UserVotes}
+import com.leobenkel.vibe.core.Schemas.{Comment, Idea, Skill, Tag, User, UserVotes}
 
 trait TableRef[PRIMARY_KEY, ROW_TYPE <: SchemaBase[PRIMARY_KEY]] {
   type PK = PRIMARY_KEY
@@ -18,7 +18,7 @@ object TableRef {
   val AllTables: Seq[TableRef[_, _]] = Seq(
     Comment,
     Idea,
-    JobTitle,
+    Skill,
     Tag,
     User,
     UserVotes

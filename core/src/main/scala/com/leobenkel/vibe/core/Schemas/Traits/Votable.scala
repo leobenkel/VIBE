@@ -42,27 +42,23 @@ trait Votable extends ForeignAssociation[Votable.FOREIGN_ID] {
   }
 
   def voteUpBy(user: User): ZIO[Any with Clock with Database, Throwable, Votable] = {
-    this.votes
-      .flatMap(_.voteUpBy(user, this))
+    AllVotes
+      .voteUpBy(user, this)
       .flatMap(executeOperations)
   }
 
   def voteDownBy(user: User): ZIO[Any with Clock with Database, Throwable, Votable] = {
-    this.votes
-      .flatMap(_.voteDownBy(user, this))
+    AllVotes
+      .voteDownBy(user, this)
       .flatMap(executeOperations)
   }
 
   def unVoteUp(user: User): ZIO[Any with Clock with Database, Throwable, Votable] = {
-    this.votes
-      .flatMap(_.unVote(user, this))
-      .flatMap(executeOperations)
+    executeOperations(AllVotes.unVote(user, this))
   }
 
   def unVoteDown(user: User): ZIO[Any with Clock with Database, Throwable, Votable] = {
-    this.votes
-      .flatMap(_.unVote(user, this))
-      .flatMap(executeOperations)
+    executeOperations(AllVotes.unVote(user, this))
   }
 }
 
