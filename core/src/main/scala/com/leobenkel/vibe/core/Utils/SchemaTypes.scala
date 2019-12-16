@@ -2,6 +2,7 @@ package com.leobenkel.vibe.core.Utils
 
 import com.leobenkel.vibe.core.Services.Database
 import zio.ZIO
+import zio.console.Console
 
 object SchemaTypes {
   type ID = Long
@@ -9,5 +10,5 @@ object SchemaTypes {
   type WHERE_CLAUSE[A] = A => Boolean
 
   type TABLE_NAME = String
-  type QueryZIO[A] = ZIO[Any with Database, Throwable, A]
+  type QueryZIO[A] = ZIO[Any with Database with Console, Throwable, A]
 }

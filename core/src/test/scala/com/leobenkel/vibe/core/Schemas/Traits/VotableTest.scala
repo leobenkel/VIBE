@@ -48,16 +48,22 @@ class VotableTest extends FreeSpec {
       }
 
       "Voting" in {
-        val process: ZIO[TestRuntime.ENV, Throwable, Assertion] = for {
+        val checkOriginalIdea = for {
           i             <- idea
           originalVotes <- i.votes
-          _             <- ZIO.accessM[Console](_.console.putStrLn(s"Read $originalVotes"))
-          newIdea       <- i.voteUpBy(user)
           originalScore <- i.score
-          newVotes      <- newIdea.votes
-          newScore      <- newIdea.score
+          _             <- ZIO.accessM[Console](_.console.putStrLn(s"Read $originalVotes"))
         } yield {
           assertResult(1, originalVotes)(originalScore)
+          i
+        }
+
+        val process: ZIO[TestRuntime.ENV, Throwable, Assertion] = for {
+          i        <- checkOriginalIdea
+          newIdea  <- i.voteUpBy(user)
+          newVotes <- newIdea.votes
+          newScore <- newIdea.score
+        } yield {
           assertResult(2, newVotes)(newScore)
         }
 

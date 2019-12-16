@@ -6,5 +6,6 @@ case class QueryOne[PK, A <: SchemaBase[PK]](
   tableName: String,
   id:        PK
 ) extends Operation[Option[A]] {
-  override def name: String = "QUERY_ONE"
+  lazy final override val name:                    String = "QUERY_ONE"
+  lazy final override val displayExtraInformation: String = s"ID:$id"
 }

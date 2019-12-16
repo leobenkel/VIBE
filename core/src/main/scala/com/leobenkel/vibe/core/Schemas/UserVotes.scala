@@ -1,11 +1,13 @@
 package com.leobenkel.vibe.core.Schemas
 
+import com.leobenkel.vibe.core.DBOperations.Delete
 import com.leobenkel.vibe.core.Utils.SchemaTypes._
 import com.leobenkel.vibe.core.Schemas.Traits._
 import com.leobenkel.vibe.core.Services.Database
 import com.leobenkel.vibe.core.Utils.{IdGenerator, VoteValue}
 import zio._
 import zio.clock.Clock
+import zio.console.Console
 
 case class UserVotes(
   creationTimestamp: Date,
@@ -19,18 +21,14 @@ case class UserVotes(
   lazy final override val get:          UserVotes = this
   lazy final override val getTableTool: TableRef[PK, UserVotes] = UserVotes
   @transient lazy val realVote:         IO[RuntimeException, VoteValue] = VoteValue.parse(vote)
-  @transient lazy val user:             QueryZIO[Option[User]] = User.queryOne(userId)
+  lazy final val user:                  QueryZIO[Option[User]] = User.queryOne(userId)
   lazy final override val toString: String = {
     s"Vote(u:$userId, t:($attachedToTable,$attachedToId), v:$vote)"
   }
 
-  lazy final val getParent: ZIO[Any with Database, Any, Option[Votable]] = {
-    ZIO
-      .fromOption(
-        TableRef(attachedToTable)
-          .map(_.asInstanceOf[TableRef[Votable.FOREIGN_ID, Votable]])
-          .map(_.queryOne(attachedToId))
-      ).flatten
+  lazy final val getParent: ZIO[Any with Database with Console, Throwable, Option[Votable]] = {
+    TableRef[Votable.FOREIGN_ID, Votable](attachedToTable)
+      .flatMap(_.queryOne(attachedToId))
   }
 
   def isTheVoter(user:    User): Boolean = this.userId == user.id
@@ -63,6 +61,13 @@ object UserVotes extends TableRef[(User.PK, Votable.FOREIGN_ID, Votable.FOREIGN_
     votable.id,
     votable.getTableName
   )
+
+  final def makeDeleteRow(
+    user:    User,
+    votable: Votable
+  ): Delete[PK] = {
+    makeDeleteRow(UserVotes.makePk(user, votable))
+  }
 
   def apply(
     user:    User,

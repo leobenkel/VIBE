@@ -1,11 +1,11 @@
 package com.leobenkel.vibe.core.Schemas
 
-import com.leobenkel.vibe.core
-import com.leobenkel.vibe.core.Utils.SchemaTypes._
 import com.leobenkel.vibe.core.Schemas.Traits._
 import com.leobenkel.vibe.core.Services.Database
 import com.leobenkel.vibe.core.Utils.IdGenerator
+import com.leobenkel.vibe.core.Utils.SchemaTypes._
 import zio.clock.Clock
+import zio.console.Console
 import zio.random.Random
 import zio.{UIO, ZIO}
 
@@ -24,21 +24,21 @@ case class Idea(
     s"E:${enrolledUserIds.size}, T:${tagsIds.size}, C:${commentIds.size})"
   lazy final override val get:          Idea = this
   lazy final override val getTableTool: TableRef[PK, Idea] = Idea
-  @transient lazy val score: ZIO[Any with Database, Throwable, Int] =
+  lazy final val score: ZIO[Any with Database with Console, Throwable, Int] =
     votes.flatMap(_.score).map(_ + 1)
 
-  @transient lazy val getAuthor: QueryZIO[Option[User]] = User.queryOne(authorId)
-
-  @transient lazy val tags: QueryZIO[Seq[Tag]] = Tag.querySeveral(tagsIds)
-
+  lazy final val getAuthor: QueryZIO[Option[User]] = User.queryOne(authorId)
+  lazy final val tags:      QueryZIO[Seq[Tag]] = Tag.querySeveral(tagsIds)
   def isAuthor(user:      User): Boolean = user.id == authorId
   def addTag(tag:         Tag):  Idea = this.copy(tagsIds = this.tagsIds + tag.id)
   def enroll(user:        User): Idea = this.copy(enrolledUserIds = this.enrolledUserIds + user.id)
   def unEnroll(user:      User): Idea = this.copy(enrolledUserIds = this.enrolledUserIds - user.id)
   override def update(ts: Date): Idea = copy(updateTimestamp = ts)
-  override def getTableName: TABLE_NAME = Idea.getTableName
+  lazy final override val getTableName: TABLE_NAME = Idea.getTableName
 
-  override def voteUpBy(user: User): ZIO[Any with Clock with Database, Throwable, Idea] = {
+  override def voteUpBy(
+    user: User
+  ): ZIO[Any with Clock with Database with Console, Throwable, Idea] = {
     if (isAuthor(user)) {
       UIO(this)
     } else {
@@ -46,7 +46,9 @@ case class Idea(
     }
   }
 
-  override def voteDownBy(user: User): ZIO[Any with Clock with Database, Throwable, Idea] = {
+  override def voteDownBy(
+    user: User
+  ): ZIO[Any with Clock with Database with Console, Throwable, Idea] = {
     if (isAuthor(user)) {
       UIO(this)
     } else {
@@ -54,7 +56,9 @@ case class Idea(
     }
   }
 
-  override def unVoteDown(user: User): ZIO[Any with Clock with Database, Throwable, Votable] = {
+  override def unVoteDown(
+    user: User
+  ): ZIO[Any with Clock with Database with Console, Throwable, Idea] = {
     if (isAuthor(user)) {
       UIO(this)
     } else {
@@ -62,11 +66,13 @@ case class Idea(
     }
   }
 
-  override def unVoteUp(user: User): ZIO[Any with Clock with Database, Throwable, Votable] = {
+  override def unVoteUp(
+    user: User
+  ): ZIO[Any with Clock with Database with Console, Throwable, Idea] = {
     if (isAuthor(user)) {
       UIO(this)
     } else {
-      super.unVoteUp(user)
+      super.unVoteUp(user).map(_.asInstanceOf[Idea])
     }
   }
 }
