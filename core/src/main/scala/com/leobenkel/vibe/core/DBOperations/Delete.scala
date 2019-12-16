@@ -1,7 +1,4 @@
 package com.leobenkel.vibe.core.DBOperations
-import com.leobenkel.vibe.core.Utils.Log
-import zio.ZIO
-import zio.console.Console
 
 case class Delete[PK](
   tableName: String,

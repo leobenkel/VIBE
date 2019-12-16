@@ -1,5 +1,5 @@
 package com.leobenkel.vibe.core.DBOperations
-import com.leobenkel.vibe.core.Schemas.Traits.{Insertable, SchemaBase}
+import com.leobenkel.vibe.core.Schemas.Traits.SchemaBase
 
 case class Insert[A <: SchemaBase[_]](
   tableName: String,

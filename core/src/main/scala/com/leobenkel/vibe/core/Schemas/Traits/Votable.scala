@@ -1,13 +1,13 @@
 package com.leobenkel.vibe.core.Schemas.Traits
 
+import com.leobenkel.vibe.core.DBOperations
 import com.leobenkel.vibe.core.Schemas.Collections.AllVotes
-import com.leobenkel.vibe.core.Utils.SchemaTypes._
 import com.leobenkel.vibe.core.Schemas._
 import com.leobenkel.vibe.core.Services.Database
 import com.leobenkel.vibe.core.Utils.DatabaseException
+import com.leobenkel.vibe.core.Utils.SchemaTypes._
 import zio.ZIO
 import zio.clock.Clock
-import com.leobenkel.vibe.core.DBOperations
 import zio.console.Console
 
 trait Votable extends ForeignAssociation[Votable.FOREIGN_ID] {

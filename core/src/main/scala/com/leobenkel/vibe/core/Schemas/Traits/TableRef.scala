@@ -30,9 +30,7 @@ trait TableRef[PRIMARY_KEY, ROW_TYPE <: SchemaBase[PRIMARY_KEY]] {
   final def makeQuerySpecific(whereClause: WHERE_CLAUSE[ROW_TYPE]): QueryWhereClause[ROW_TYPE] =
     DBOperations.QueryWhereClause[ROW_TYPE](getTableName, whereClause)
 
-  final def querySpecific(
-    whereClause: WHERE_CLAUSE[ROW_TYPE]
-  ): QueryZIO[Seq[ROW_TYPE]] =
+  final def querySpecific(whereClause: WHERE_CLAUSE[ROW_TYPE]): QueryZIO[Seq[ROW_TYPE]] =
     makeQuerySpecific(whereClause).act
 
   final def makeDeleteRow(id: PK): Delete[PK] =

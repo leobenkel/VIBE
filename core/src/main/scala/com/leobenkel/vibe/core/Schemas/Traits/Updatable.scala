@@ -4,7 +4,6 @@ import com.leobenkel.vibe.core.Utils.IdGenerator
 import com.leobenkel.vibe.core.Utils.SchemaTypes.{Date, QueryZIO}
 import zio.ZIO
 import zio.clock.Clock
-import zio.console.Console
 
 trait Updatable[PRIMARY_KEY, SELF <: SchemaBase[PRIMARY_KEY] with Updatable[PRIMARY_KEY, SELF]] {
   private type PK = PRIMARY_KEY

@@ -1,9 +1,9 @@
 package com.leobenkel.vibe.core.Schemas
 
 import com.leobenkel.vibe.core.DBOperations.Delete
-import com.leobenkel.vibe.core.Utils.SchemaTypes._
 import com.leobenkel.vibe.core.Schemas.Traits._
 import com.leobenkel.vibe.core.Services.Database
+import com.leobenkel.vibe.core.Utils.SchemaTypes._
 import com.leobenkel.vibe.core.Utils.{IdGenerator, VoteValue}
 import zio._
 import zio.clock.Clock
