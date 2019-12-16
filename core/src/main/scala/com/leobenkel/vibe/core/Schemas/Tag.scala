@@ -1,8 +1,8 @@
 package com.leobenkel.vibe.core.Schemas
 
-import com.leobenkel.vibe.core.Utils.SchemaTypes._
-import com.leobenkel.vibe.core.Schemas.Traits.{SchemaBase, TableRef, Updatable}
+import com.leobenkel.vibe.core.Schemas.Traits._
 import com.leobenkel.vibe.core.Utils.IdGenerator
+import com.leobenkel.vibe.core.Utils.SchemaTypes._
 import zio.ZIO
 import zio.clock.Clock
 import zio.random.Random
@@ -12,7 +12,7 @@ case class Tag(
   creationTimestamp: Date,
   updateTimestamp:   Date,
   name:              String
-) extends SchemaBase[ID] with Updatable[ID,Tag] {
+) extends SchemaBase[ID] with Updatable[ID, Tag] {
   override def update(updateTimestamp: Date): Tag = {
     this.update(updateTimestamp = updateTimestamp)
   }

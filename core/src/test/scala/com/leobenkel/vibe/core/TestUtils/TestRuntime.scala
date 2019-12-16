@@ -1,12 +1,11 @@
 package com.leobenkel.vibe.core.TestUtils
 
 import com.leobenkel.vibe.core.Services.{Database, DatabaseInMemory}
-import com.leobenkel.vibe.core.Services.Database.QueryType
-import zio.{Runtime, Task}
+import zio.Runtime
 import zio.clock.Clock
+import zio.console.Console
 import zio.internal.{Platform, PlatformLive}
 import zio.random.Random
-import zio.console.Console
 
 case class TestRuntime() extends Runtime[TestRuntime.ENV] {
   override val environment: TestRuntime.ENV = TestEnvironment()

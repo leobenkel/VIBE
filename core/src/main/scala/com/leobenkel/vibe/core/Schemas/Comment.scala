@@ -1,12 +1,12 @@
 package com.leobenkel.vibe.core.Schemas
 
-import com.leobenkel.vibe.core.Schemas.Traits.Commentable.FOREIGN_ID
-import com.leobenkel.vibe.core.Schemas.Traits.{Commentable, SchemaBase, TableRef, Updatable}
-import com.leobenkel.vibe.core.Utils.SchemaTypes._
+import com.leobenkel.vibe.core.Schemas.Traits._
 import com.leobenkel.vibe.core.Services.Database
 import com.leobenkel.vibe.core.Utils.IdGenerator
+import com.leobenkel.vibe.core.Utils.SchemaTypes._
 import zio.ZIO
 import zio.clock.Clock
+import zio.console.Console
 import zio.random.Random
 
 case class Comment(
@@ -18,16 +18,12 @@ case class Comment(
   attachedToId:      Commentable.FOREIGN_ID,
   attachedToTable:   Commentable.FOREIGN_TABLE,
   commentIds:        Set[Comment.PK]
-) extends SchemaBase[ID] with Commentable with Updatable[ID,Comment] {
+) extends SchemaBase[ID] with Commentable with Updatable[ID, Comment] {
   override def getTableName: TABLE_NAME = Comment.getTableName
 
-  lazy final val getParent: ZIO[Any with Database, Any, Option[Commentable]] = {
-    ZIO
-      .fromOption(
-        TableRef(attachedToTable)
-          .map(_.asInstanceOf[TableRef[Commentable.FOREIGN_ID, Commentable]])
-          .map(_.queryOne(attachedToId))
-      ).flatten
+  lazy final val getParent: ZIO[Any with Database with Console, Throwable, Option[Commentable]] = {
+    TableRef[Commentable.FOREIGN_ID, Commentable](attachedToTable)
+      .flatMap(_.queryOne(attachedToId))
   }
 
   override def update(updateTimestamp: Date): Comment = {

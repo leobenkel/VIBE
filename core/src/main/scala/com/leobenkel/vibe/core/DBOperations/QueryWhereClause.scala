@@ -7,5 +7,6 @@ case class QueryWhereClause[A <: SchemaBase[_]](
   tableName:   String,
   whereClause: WHERE_CLAUSE[A]
 ) extends Operation[Seq[A]] {
-  override def name: String = "QUERY_WHERE"
+  lazy final override val name:                    String = "QUERY_WHERE"
+  lazy final override val displayExtraInformation: String = s"Where:${whereClause.toString}"
 }

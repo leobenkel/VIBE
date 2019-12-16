@@ -1,17 +1,19 @@
 package com.leobenkel.vibe.core.Schemas.Traits
 
+import com.leobenkel.vibe.core.DBOperations
 import com.leobenkel.vibe.core.Schemas.Collections.AllVotes
-import com.leobenkel.vibe.core.Utils.SchemaTypes._
 import com.leobenkel.vibe.core.Schemas._
 import com.leobenkel.vibe.core.Services.Database
 import com.leobenkel.vibe.core.Utils.DatabaseException
+import com.leobenkel.vibe.core.Utils.SchemaTypes._
 import zio.ZIO
 import zio.clock.Clock
+import zio.console.Console
 
 trait Votable extends ForeignAssociation[Votable.FOREIGN_ID] {
   private type PRIMARY_KEY = Votable.FOREIGN_ID
 
-  @transient lazy final val votes: QueryZIO[AllVotes] = AllVotes.fetch(this)
+  lazy final val votes: QueryZIO[AllVotes] = AllVotes.fetch(this)
 
   def isSameVotable(other: Votable): Boolean = {
     this.isSameVotable(other.id, other.getTableName)
@@ -27,8 +29,8 @@ trait Votable extends ForeignAssociation[Votable.FOREIGN_ID] {
   def refreshTimestamp: ZIO[Any with Clock, Nothing, Votable]
 
   private def executeOperations(
-    operations: Seq[AllVotes.Operation]
-  ): ZIO[Any with Clock with Database, Throwable, Votable] = {
+    operations: Seq[DBOperations.OperationNoReturn]
+  ): ZIO[Any with Clock with Database with Console, Throwable, Votable] = {
     AllVotes.execute(operations).flatMap {
       case true => this.refreshTimestamp
       case false =>
@@ -41,23 +43,23 @@ trait Votable extends ForeignAssociation[Votable.FOREIGN_ID] {
     }
   }
 
-  def voteUpBy(user: User): ZIO[Any with Clock with Database, Throwable, Votable] = {
+  def voteUpBy(user: User): ZIO[Any with Clock with Database with Console, Throwable, Votable] = {
     AllVotes
       .voteUpBy(user, this)
       .flatMap(executeOperations)
   }
 
-  def voteDownBy(user: User): ZIO[Any with Clock with Database, Throwable, Votable] = {
+  def voteDownBy(user: User): ZIO[Any with Clock with Database with Console, Throwable, Votable] = {
     AllVotes
       .voteDownBy(user, this)
       .flatMap(executeOperations)
   }
 
-  def unVoteUp(user: User): ZIO[Any with Clock with Database, Throwable, Votable] = {
+  def unVoteUp(user: User): ZIO[Any with Clock with Database with Console, Throwable, Votable] = {
     executeOperations(AllVotes.unVote(user, this))
   }
 
-  def unVoteDown(user: User): ZIO[Any with Clock with Database, Throwable, Votable] = {
+  def unVoteDown(user: User): ZIO[Any with Clock with Database with Console, Throwable, Votable] = {
     executeOperations(AllVotes.unVote(user, this))
   }
 }

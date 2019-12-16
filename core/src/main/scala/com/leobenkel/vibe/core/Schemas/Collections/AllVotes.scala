@@ -1,12 +1,15 @@
 package com.leobenkel.vibe.core.Schemas.Collections
 
-import com.leobenkel.vibe.core.Utils.SchemaTypes._
+import com.leobenkel.vibe.core.DBOperations
+import com.leobenkel.vibe.core.DBOperations.OperationNoReturn
 import com.leobenkel.vibe.core.Schemas.Traits.Votable
 import com.leobenkel.vibe.core.Schemas.{User, UserVotes}
 import com.leobenkel.vibe.core.Services.Database
+import com.leobenkel.vibe.core.Utils.SchemaTypes._
 import com.leobenkel.vibe.core.Utils.VoteValue
 import zio.ZIO
 import zio.clock.Clock
+import zio.console.Console
 
 case class AllVotes(votes: Set[UserVotes]) {
   lazy final override val toString: String = s"AllVote(${votes.mkString(";")})"
@@ -52,35 +55,33 @@ object AllVotes {
   def voteUpBy(
     user:    User,
     votable: Votable
-  ): ZIO[Any with Clock, RuntimeException, Seq[AllVotes.Operation]] =
+  ): ZIO[Any with Clock, Nothing, Seq[OperationNoReturn]] =
     for {
       newVote <- UserVotes(user, votable, VoteValue.VoteUp)
     } yield {
-      unVote(user, votable) :+ AllVotes.Add(newVote)
+      unVote(user, votable) :+ UserVotes.makeInsert(newVote)
     }
 
   def voteDownBy(
     user:    User,
     votable: Votable
-  ): ZIO[Any with Clock, RuntimeException, Seq[AllVotes.Operation]] =
+  ): ZIO[Any with Clock, Nothing, Seq[OperationNoReturn]] =
     for {
       newVote <- UserVotes(user, votable, VoteValue.VoteDown)
     } yield {
-      unVote(user, votable) :+ AllVotes.Add(newVote)
+      unVote(user, votable) :+ UserVotes.makeInsert(newVote)
     }
 
   def unVote(
     user:    User,
     votable: Votable
-  ): Seq[AllVotes.Operation] =
-    Seq(AllVotes.Delete(UserVotes.makePk(user, votable)))
+  ): Seq[DBOperations.Delete[(User.PK, Votable.FOREIGN_ID, Votable.FOREIGN_TABLE)]] =
+    Seq(UserVotes.makeDeleteRow(user, votable))
 
-  def execute(operations: Seq[Operation]): ZIO[Any with Database, Throwable, Boolean] = {
-    ZIO
-      .sequence(operations.map {
-        case Add(vote) => UserVotes.insert(vote)
-        case d: Delete => UserVotes.deleteRow(d.vote)
-      }).map(_.reduce(_ || _))
+  def execute(
+    operations: Seq[DBOperations.OperationNoReturn]
+  ): ZIO[Any with Database with Console, Throwable, Boolean] = {
+    ZIO.sequence(operations.map(_.act)).map(_.reduce(_ || _))
   }
 
   def fetch(votable: Votable): QueryZIO[AllVotes] = {
@@ -90,22 +91,5 @@ object AllVotes {
 //        s"${UserVotes.getTableName}.attachedToId = ${votable.id} " +
 //          s"AND ${UserVotes.getTableName}.attachedToTable = ${votable.getTableName}"
       ).map(r => AllVotes(r.toSet))
-  }
-
-  sealed trait Operation {
-    def act:  QueryZIO[Boolean]
-    def name: String
-
-    override def toString: String = super.toString
-  }
-
-  case class Add(vote: UserVotes) extends Operation {
-    override def act:  QueryZIO[Boolean] = UserVotes.insert(vote)
-    override def name: String = "ADD"
-  }
-
-  case class Delete(vote: UserVotes.PK) extends Operation {
-    override def act:  QueryZIO[Boolean] = UserVotes.deleteRow(vote)
-    override def name: String = "DELETE"
   }
 }
