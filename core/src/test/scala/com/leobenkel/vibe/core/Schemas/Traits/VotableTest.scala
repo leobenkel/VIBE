@@ -34,8 +34,8 @@ class VotableTest extends FreeSpec {
         .unsafeRunSync(makeUser).map(Some(_)).getOrElse(_ => None).get
 
       val idea = for {
-        t1 <- Tag("tag1")
-        t2 <- Tag("tag2")
+        t1 <- Tag("tag1", visible = true)
+        t2 <- Tag("tag2", visible = true)
         idea <- Idea(
           title = "good idea",
           description = "this is awesome",

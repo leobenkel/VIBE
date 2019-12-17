@@ -42,13 +42,13 @@ case class AllVotes(votes: Set[UserVotes]) {
     user:    User,
     votable: Votable
   ): ZIO[Any, RuntimeException, Option[UserVotes]] =
-    this.voteUp.map(_.find(_.isTheVoter(user)))
+    this.voteUp.map(_.find(_.isSpecificOne(user, votable)))
 
   def hasVotedDown(
     user:    User,
     votable: Votable
   ): ZIO[Any, RuntimeException, Option[UserVotes]] =
-    this.voteDown.map(_.find(_.isTheVoter(user)))
+    this.voteDown.map(_.find(_.isSpecificOne(user, votable)))
 }
 
 object AllVotes {

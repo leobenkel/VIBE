@@ -11,7 +11,8 @@ case class Tag(
   id:                ID,
   creationTimestamp: Date,
   updateTimestamp:   Date,
-  name:              String
+  name:              String,
+  isVisible:         Boolean
 ) extends SchemaBase[ID] with Updatable[ID, Tag] {
   override def update(updateTimestamp: Date): Tag = {
     this.update(updateTimestamp = updateTimestamp)
@@ -24,14 +25,18 @@ case class Tag(
 object Tag extends TableRef[ID, Tag] {
   override def getTableName: TABLE_NAME = "tags"
 
-  def apply(name: String): ZIO[Any with Clock with Random, Nothing, Tag] =
-    IdGenerator.generateId(name).map {
+  def apply(
+    name:    String,
+    visible: Boolean
+  ): ZIO[Any with Clock with Random, Nothing, Tag] =
+    IdGenerator.generateId((name, visible)).map {
       case (id, date) =>
         Tag(
           id = id,
           creationTimestamp = date,
           updateTimestamp = date,
-          name = name
+          name = name,
+          isVisible = visible
         )
     }
 
