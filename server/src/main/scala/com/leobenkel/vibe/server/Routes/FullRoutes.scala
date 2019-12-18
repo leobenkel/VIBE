@@ -2,6 +2,8 @@ package com.leobenkel.vibe.server.Routes
 
 import java.time.LocalDateTime
 
+import akka.http.scaladsl.marshalling.Marshaller
+import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.server.directives.DebuggingDirectives
 import akka.http.scaladsl.server.{Route, _}
 import com.leobenkel.vibe.server.Environment.LiveEnvironment
@@ -11,7 +13,8 @@ import com.leobenkel.vibe.server.Routes.Utils.{RouteTrait, RouteTraitWithChild}
 import com.leobenkel.vibe.server.Schemas.ModelPickler
 import com.leobenkel.vibe.server.Utils.ZIODirectives
 import de.heikoseeberger.akkahttpupickle.UpickleSupport
-import zio.UIO
+import io.circe.generic.auto._
+import zio.{Task, UIO}
 
 trait FullRoutes
     extends RouteTraitWithChild with Directives with LiveEnvironment with UpickleSupport
@@ -38,12 +41,14 @@ trait FullRoutes
       getChildRoute.map(_.route).reduce(_ ~ _) ~
         path("helloWorld") {
           complete {
+            case class Output(str: String)
+            val c = MarshallerWrap[Output]("plop", "hahaha")
+            implicit val m: Marshaller[Task[Output], HttpResponse] = c.zioMarshaller
             for {
               count <- UIO(2)
-            } yield s"Yay! Count: $count at ${LocalDateTime.now}"
+            } yield Output(s"Yay! Count: $count at ${LocalDateTime.now}")
           }
         }
     }
   }
-
 }

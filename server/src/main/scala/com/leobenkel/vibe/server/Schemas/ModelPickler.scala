@@ -1,7 +1,10 @@
 package com.leobenkel.vibe.server.Schemas
 
 import com.leobenkel.vibe.core.Schemas._
+import com.leobenkel.vibe.server.Messages._
 import upickle.default.{macroRW, ReadWriter => RW}
+
+import scala.reflect.ClassTag
 
 trait ModelPickler {
   implicit val CommentRW:   RW[Comment] = macroRW

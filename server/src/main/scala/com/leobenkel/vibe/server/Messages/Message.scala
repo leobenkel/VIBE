@@ -1,5 +1,7 @@
 package com.leobenkel.vibe.server.Messages
 
+import akka.http.scaladsl.marshalling._
+import akka.http.scaladsl.model.StatusCodes
 import io.circe._
 import io.circe.generic.auto._
 import io.circe.syntax._
@@ -7,8 +9,7 @@ import io.circe.syntax._
 abstract class Message(
   operation: String,
   status:    MessageStatus
-) {
-
+) extends ToResponseMarshallable {
   private case class SimpleMessage(
     operation:    String,
     success:      Boolean,
@@ -44,6 +45,13 @@ abstract class Message(
   final def toJsonString: String = {
     this.asJsonObject.toString
   }
+
+  override type T = String
+
+  override def value: T = this.toJsonString
+
+  implicit override def marshaller: ToResponseMarshaller[T] =
+    Marshaller.fromToEntityMarshaller(status = StatusCodes.OK, headers = Nil)
 }
 
 object Message {

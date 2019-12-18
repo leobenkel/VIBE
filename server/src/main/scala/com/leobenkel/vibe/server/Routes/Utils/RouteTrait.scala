@@ -22,9 +22,8 @@ private[Routes] trait RouteTrait {
 
   def route: Route = path(url)(routeContent)
 
-  protected def error(errorMessage: String): Message = {
+  protected def error(errorMessage: String): Message =
     ErrorMessage(getFullUrl)(errorMessage)
-  }
 
   protected def getStatusCode: StatusCode = StatusCodes.OK
 
