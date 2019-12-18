@@ -67,4 +67,5 @@ trait Votable extends ForeignAssociation[Votable.FOREIGN_ID] {
 object Votable {
   type FOREIGN_ID = ID
   type FOREIGN_TABLE = TABLE_NAME
+  type PK = ID
 }

@@ -30,6 +30,7 @@ lazy val root = project
   .in(file("."))
   .aggregate(server, core)
   .settings(
+    name                          := projectName,
     publish                       := {},
     publishLocal                  := {},
     Global / onChangedBuildSource := ReloadOnSourceChanges

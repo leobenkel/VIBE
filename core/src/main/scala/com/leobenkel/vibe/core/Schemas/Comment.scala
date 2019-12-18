@@ -38,23 +38,32 @@ object Comment extends TableRef[ID, Comment] {
   override def getTableName: TABLE_NAME = "comments"
 
   def apply(
-    author:     User,
-    content:    String,
-    attachedTo: Commentable
+    authorId:        User.PK,
+    content:         String,
+    attachedToTable: TABLE_NAME,
+    attachedToId:    Commentable.PK
   ): ZIO[Any with Clock with Random, Nothing, Comment] =
-    IdGenerator.generateId((author.id, content, attachedTo.id, attachedTo.getTableName)).map {
+    IdGenerator.generateId((authorId, content, attachedToId, attachedToTable)).map {
       case (id, date) =>
         Comment(
           id = id,
           creationTimestamp = date,
           updateTimestamp = date,
-          authorId = author.id,
+          authorId = authorId,
           content = content,
-          attachedToId = attachedTo.id,
-          attachedToTable = attachedTo.getTableName,
+          attachedToId = attachedToId,
+          attachedToTable = attachedToTable,
           commentIds = Set.empty
         )
     }
+
+  def apply(
+    author:     User,
+    content:    String,
+    attachedTo: Commentable
+  ): ZIO[Any with Clock with Random, Nothing, Comment] = {
+    apply(author.id, content, attachedTo.getTableName, attachedTo.id)
+  }
 
   override def idFromString(s: String): Comment.PK = SchemaTypes.idFromString(s)
 }

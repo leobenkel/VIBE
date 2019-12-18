@@ -44,12 +44,28 @@ object User extends TableRef[ID, User] {
     name:       String,
     email:      String,
     oauthToken: OAuth,
+    skills:     Set[Skill.PK]
+  ): ZIO[Any with Clock with Random, Nothing, User] =
+    IdGenerator.generateId((name, email, oauthToken, skills.mkString(", "))).map {
+      case (id, date) =>
+        User(
+          id = id,
+          creationTimestamp = date,
+          updateTimestamp = date,
+          name = name,
+          email = email,
+          oauthToken = oauthToken,
+          skills = skills
+        )
+    }
+
+  def make(
+    name:       String,
+    email:      String,
+    oauthToken: OAuth,
     skills:     Set[Skill]
   ): ZIO[Any with Clock with Random, Nothing, User] =
-    IdGenerator.generateId((name, email, oauthToken, skills.map(_.id).mkString(", "))).map {
-      case (id, date) =>
-        User(id, date, date, name, email, oauthToken, skills.map(_.id))
-    }
+    apply(name, email, oauthToken, skills.map(_.id))
 
   override def idFromString(s: String): Comment.PK = SchemaTypes.idFromString(s)
 }

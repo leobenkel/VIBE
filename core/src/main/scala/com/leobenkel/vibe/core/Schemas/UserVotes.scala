@@ -72,9 +72,21 @@ object UserVotes extends TableRef[(User.PK, Votable.FOREIGN_ID, Votable.FOREIGN_
   }
 
   def apply(
-    user:    User,
-    votable: Votable,
-    vote:    VoteValue
+    user:             User.PK,
+    votableTableName: TABLE_NAME,
+    votable:          Votable.PK,
+    vote:             Int
+  ): ZIO[Any with Clock, RuntimeException, UserVotes] = {
+    VoteValue.parse(vote).flatMap { v =>
+      this.apply(user, votableTableName, votable, v)
+    }
+  }
+
+  def apply(
+    user:             User.PK,
+    votableTableName: TABLE_NAME,
+    votable:          Votable.PK,
+    vote:             VoteValue
   ): ZIO[Any with Clock, Nothing, UserVotes] = {
     for {
       date <- IdGenerator.getNowTime
@@ -82,12 +94,20 @@ object UserVotes extends TableRef[(User.PK, Votable.FOREIGN_ID, Votable.FOREIGN_
       UserVotes(
         creationTimestamp = date,
         updateTimestamp = date,
-        userId = user.id,
-        attachedToId = votable.id,
-        attachedToTable = votable.getTableName,
+        userId = user,
+        attachedToId = votable,
+        attachedToTable = votableTableName,
         vote = vote.encoding
       )
     }
+  }
+
+  def apply(
+    user:    User,
+    votable: Votable,
+    vote:    VoteValue
+  ): ZIO[Any with Clock, Nothing, UserVotes] = {
+    apply(user.id, votable.getTableName, votable.id, vote)
   }
 
   override def idFromString(s: String): (Schemas.User.PK, FOREIGN_ID, FOREIGN_TABLE) = {

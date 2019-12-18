@@ -11,7 +11,8 @@ case class Skill(
   id:                ID,
   creationTimestamp: Date,
   updateTimestamp:   Date,
-  name:              String
+  name:              String,
+  isVisible:         Boolean
 ) extends SchemaBase[ID] with Updatable[ID, Skill] {
   lazy final override val get:          Skill = this
   lazy final override val getTableTool: TableRef[PK, Skill] = Skill
@@ -22,16 +23,20 @@ case class Skill(
 }
 
 object Skill extends TableRef[ID, Skill] {
-  override def getTableName: TABLE_NAME = "job_titles"
+  override def getTableName: TABLE_NAME = "skills"
 
-  def apply(name: String): ZIO[Any with Clock with Random, Nothing, Skill] =
+  def apply(
+    name:      String,
+    isVisible: Boolean
+  ): ZIO[Any with Clock with Random, Nothing, Skill] =
     IdGenerator.generateId(name).map {
       case (id, date) =>
         Skill(
           id = id,
           creationTimestamp = date,
           updateTimestamp = date,
-          name = name
+          name = name,
+          isVisible = isVisible
         )
     }
 

@@ -83,23 +83,32 @@ object Idea extends TableRef[ID, Idea] {
   def apply(
     title:       String,
     description: String,
-    author:      User,
-    tagsIds:     Set[Tag]
+    authorId:    User.PK,
+    tagsIds:     Set[Tag.PK]
   ): ZIO[Any with Clock with Random, Nothing, Idea] = {
-    IdGenerator.generateId((title, description, author.id, tagsIds.map(_.id), Set.empty)).map {
+    IdGenerator.generateId((title, description, authorId, tagsIds, Set.empty)).map {
       case (id, date) =>
-        new Idea(
+        Idea(
           id = id,
           creationTimestamp = date,
           updateTimestamp = date,
           title = title,
           description = description,
-          authorId = author.id,
+          authorId = authorId,
           enrolledUserIds = Set.empty,
-          tagsIds = tagsIds.map(_.id),
+          tagsIds = tagsIds,
           commentIds = Set.empty
         )
     }
+  }
+
+  def apply(
+    title:       String,
+    description: String,
+    author:      User,
+    tags:        Set[Tag]
+  ): ZIO[Any with Clock with Random, Nothing, Idea] = {
+    apply(title, description, author.id, tags.map(_.id))
   }
 
   override def idFromString(s: String): Comment.PK = SchemaTypes.idFromString(s)

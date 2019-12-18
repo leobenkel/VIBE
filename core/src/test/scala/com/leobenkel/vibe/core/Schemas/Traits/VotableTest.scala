@@ -40,7 +40,7 @@ class VotableTest extends FreeSpec {
           title = "good idea",
           description = "this is awesome",
           author = author,
-          tagsIds = Set(t1, t2)
+          tags = Set(t1, t2)
         )
         _ <- ZIO.accessM[Console](_.console.putStrLn(s"Created idea: $idea"))
       } yield {

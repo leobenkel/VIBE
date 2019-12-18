@@ -14,12 +14,15 @@ private[Routes] object RouteUtils {
     depth:  Int = 0
   ): Seq[RouteDescriptions] = {
     routes.map {
-      case r: RouteTraitWithChild =>
+      case route: RouteTraitWithChild =>
         RouteDescriptions(
-          url = r.getFullUrl,
+          url = route.getFullUrl,
           depth = depth,
-          method = r.method.value,
-          path = getRoutes(routes = r.getChildRoute, depth = depth + 1)
+          method = route.method.value,
+          path = getRoutes(
+            routes = route.getChildRoute.sortBy(rr => (rr.getFullUrl, rr.method.value)),
+            depth = depth + 1
+          )
         )
       case r: RouteTrait =>
         RouteDescriptions(
