@@ -23,6 +23,12 @@ trait TableRef[PRIMARY_KEY, ROW_TYPE <: SchemaBase[PRIMARY_KEY]] {
   final def queryOne(id: PK): QueryZIO[Option[ROW_TYPE]] =
     makeQueryOne(id).act
 
+  final def makeQueryAll(): QueryAll[PRIMARY_KEY, ROW_TYPE] =
+    DBOperations.QueryAll[PRIMARY_KEY, ROW_TYPE](getTableName)
+
+  final def queryAll(): QueryZIO[Seq[ROW_TYPE]] =
+    makeQueryAll().act
+
   final def makeQuerySeveral(ids: Set[PK]): QuerySeveralOnID[PRIMARY_KEY, ROW_TYPE] =
     DBOperations.QuerySeveralOnID[PRIMARY_KEY, ROW_TYPE](getTableName, ids)
 

@@ -40,7 +40,8 @@ private[Routes] trait RouteSchema[PK, A <: SchemaBase[PK], INPUT] extends RouteT
   override private[Routes] def getChildRoute: Seq[RouteTrait] = {
     Seq(
       RouteGetSchema(self),
-      RoutePutSchema(self)
+      RoutePutSchema(self),
+      RouteGetAllSchema(self)
     )
   }
 }

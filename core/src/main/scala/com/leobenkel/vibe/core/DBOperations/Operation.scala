@@ -2,15 +2,15 @@ package com.leobenkel.vibe.core.DBOperations
 
 import com.leobenkel.vibe.core.Services.Database
 import com.leobenkel.vibe.core.Utils.Log
-import com.leobenkel.vibe.core.Utils.SchemaTypes.QueryZIO
+import com.leobenkel.vibe.core.Utils.SchemaTypes.{QueryZIO, TABLE_NAME}
 import zio.ZIO
 import zio.console.Console
 
 trait Operation[OUTPUT] {
   final def act: QueryZIO[OUTPUT] = Database.runQuery[OUTPUT](this)
   def name:                    String
-  def tableName:               String
-  def displayExtraInformation: String
+  def tableName:               TABLE_NAME
+  protected def displayExtraInformation: String
 
   final def display: ZIO[Any with Console, Throwable, this.type] = {
     for {
