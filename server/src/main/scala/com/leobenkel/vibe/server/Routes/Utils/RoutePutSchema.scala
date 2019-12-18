@@ -36,7 +36,7 @@ trait RoutePutSchema[PK, A <: SchemaBase[PK], INPUT] extends RouteTrait {
           complete {
             implicit val c: ClassTag[A] = tag
             implicit val e: Encoder[A] = encoder
-            implicit val m: Marshaller[Task[(Boolean, A)], HttpResponse] =
+            implicit val m: Marshaller[Task[(A, Boolean)], HttpResponse] =
               MarshallerWrap.boolean[A](
                 operation = getFullUrl,
                 tableName = tableName,
@@ -48,7 +48,7 @@ trait RoutePutSchema[PK, A <: SchemaBase[PK], INPUT] extends RouteTrait {
               newItem <- make(a)
               b       <- getTableRef.insert(newItem)
             } yield {
-              (b, newItem)
+              newItem -> b
             }).provide(environment)
           }
         }

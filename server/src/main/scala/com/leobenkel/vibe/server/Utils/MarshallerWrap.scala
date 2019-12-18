@@ -98,26 +98,69 @@ object MarshallerWrap extends DefaultRuntime {
     missingErrorMessage: => String
   )(
     implicit encoder: Encoder[A]
-  ): Marshaller[Task[(Boolean, A)], HttpResponse] = {
+  ): Marshaller[Task[(A, Boolean)], HttpResponse] = {
     def zioMarshaller(
       implicit m1: Marshaller[MessageWithContent[A], HttpResponse],
       m2:          Marshaller[Message, HttpResponse]
-    ): Marshaller[Task[(Boolean, A)], HttpResponse] =
-      Marshaller { _: ExecutionContext => a: Task[(Boolean, A)] =>
+    ): Marshaller[Task[(A, Boolean)], HttpResponse] =
+      Marshaller { _: ExecutionContext => a: Task[(A, Boolean)] =>
         {
           val r: ZIO[Any, Throwable, List[Marshalling[HttpResponse]]] = a.foldM(
             (e: Throwable) => {
               Task.fromFuture(implicit ec => m2(ErrorMessage(operation)(e.toString)))
             }, {
-              case (true, item) =>
+              case (item, true) =>
                 val wrappedM = MessageWithContent(
                   operation = operation,
                   status = MessageStatus.Success,
                   fieldName = s"$tableName-$fieldName"
                 )(item)
                 Task.fromFuture(implicit ec => m1(wrappedM))
-              case (false, _) =>
+              case (_, false) =>
                 Task.fromFuture(implicit ec => m2(ErrorMessage(operation)(missingErrorMessage)))
+            }
+          )
+
+          val p = scala.concurrent.Promise[List[Marshalling[HttpResponse]]]()
+
+          unsafeRunAsync(r)(_.fold(e => p.failure(e.squash), output => p.success(output)))
+
+          p.future
+        }
+      }
+    zioMarshaller
+  }
+
+  def booleanOpt[A: ClassTag](
+    operation:              String,
+    tableName:              String,
+    fieldName:              String,
+    notFoundErrorMessage:   => String,
+    notDeletedErrorMessage: => String
+  )(
+    implicit encoder: Encoder[A]
+  ): Marshaller[Task[(Option[A], Boolean)], HttpResponse] = {
+    def zioMarshaller(
+      implicit m1: Marshaller[MessageWithContent[A], HttpResponse],
+      m2:          Marshaller[Message, HttpResponse]
+    ): Marshaller[Task[(Option[A], Boolean)], HttpResponse] =
+      Marshaller { _: ExecutionContext => a: Task[(Option[A], Boolean)] =>
+        {
+          val r: ZIO[Any, Throwable, List[Marshalling[HttpResponse]]] = a.foldM(
+            (e: Throwable) => {
+              Task.fromFuture(implicit ec => m2(ErrorMessage(operation)(e.toString)))
+            }, {
+              case (Some(item), true) =>
+                val wrappedM = MessageWithContent(
+                  operation = operation,
+                  status = MessageStatus.Success,
+                  fieldName = s"$tableName-$fieldName"
+                )(item)
+                Task.fromFuture(implicit ec => m1(wrappedM))
+              case (None, _) =>
+                Task.fromFuture(implicit ec => m2(ErrorMessage(operation)(notFoundErrorMessage)))
+              case (None, false) =>
+                Task.fromFuture(implicit ec => m2(ErrorMessage(operation)(notDeletedErrorMessage)))
             }
           )
 

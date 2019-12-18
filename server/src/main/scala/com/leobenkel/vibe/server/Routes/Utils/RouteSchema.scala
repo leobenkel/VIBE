@@ -41,7 +41,8 @@ private[Routes] trait RouteSchema[PK, A <: SchemaBase[PK], INPUT] extends RouteT
     Seq(
       RouteGetSchema(self),
       RoutePutSchema(self),
-      RouteGetAllSchema(self)
+      RouteGetAllSchema(self),
+      RouteDeleteSchema(self)
     )
   }
 }
