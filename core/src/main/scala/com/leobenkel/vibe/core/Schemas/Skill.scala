@@ -1,8 +1,8 @@
 package com.leobenkel.vibe.core.Schemas
 
 import com.leobenkel.vibe.core.Schemas.Traits._
-import com.leobenkel.vibe.core.Utils.IdGenerator
 import com.leobenkel.vibe.core.Utils.SchemaTypes._
+import com.leobenkel.vibe.core.Utils.{IdGenerator, SchemaTypes}
 import zio.ZIO
 import zio.clock.Clock
 import zio.random.Random
@@ -35,4 +35,5 @@ object Skill extends TableRef[ID, Skill] {
         )
     }
 
+  override def idFromString(s: String): Comment.PK = SchemaTypes.idFromString(s)
 }

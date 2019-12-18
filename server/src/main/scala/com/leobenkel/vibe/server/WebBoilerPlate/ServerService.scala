@@ -14,27 +14,27 @@ trait ServerService extends Config {
 
   val log: LoggingAdapter = Logging.getLogger(actorSystem, this)
 
-  val serverSource: Source[Http.IncomingConnection, Future[Http.ServerBinding]] =
-    Http()
-      .bind(
-        interface = config.getLocalString("host"),
-        port = config.getLocalInt("port")
-      )
+  lazy private val host: String = config.getLocalString("host")
+  lazy private val port: Int = config.getLocalInt("port")
 
-  val bindingFuture: Future[Http.ServerBinding] =
-    serverSource
-      .to(Sink.foreach { connection => // foreach materializes the source
-        log.debug("Accepted new connection from " + connection.remoteAddress)
-        // ... and then actually handle the connection
-        try {
-          connection.flow.joinMat(routes)(Keep.both).run()
-          ()
-        } catch {
-          case NonFatal(e) =>
-            log.error(e, "Could not materialize handling flow for {}", connection)
-            throw e
-        }
-      })
-      .run()
+  val serverSource: Source[Http.IncomingConnection, Future[Http.ServerBinding]] = {
+    log.info(s"Opening connection at $host:$port")
+    Http().bind(interface = host, port = port)
+  }
+
+  val bindingFuture: Future[Http.ServerBinding] = serverSource
+    .to(Sink.foreach { connection => // foreach materializes the source
+      log.debug("Accepted new connection from " + connection.remoteAddress)
+      // ... and then actually handle the connection
+      try {
+        connection.flow.joinMat(routes)(Keep.both).run()
+        ()
+      } catch {
+        case NonFatal(e) =>
+          log.error(e, "Could not materialize handling flow for {}", connection)
+          throw e
+      }
+    })
+    .run()
 }
 // $COVERAGE-ON$

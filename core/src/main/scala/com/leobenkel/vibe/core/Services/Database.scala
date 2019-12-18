@@ -54,6 +54,8 @@ object DatabaseInMemory extends Database.Service {
           case QueryWhereClause(tableName, whereClause) =>
             DB.getOrElse(tableName, mutable.Map.empty)
               .filter { case (_, row) => whereClause(row) }.values.toSeq.asInstanceOf[OUT]
+          case QueryAll(tableName) =>
+            DB.getOrElse(tableName, mutable.Map.empty).values.toSeq.asInstanceOf[OUT]
         }
       }
   }

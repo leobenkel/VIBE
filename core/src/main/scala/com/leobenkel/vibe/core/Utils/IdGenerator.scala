@@ -16,11 +16,11 @@ object IdGenerator {
 
   def generateId(item: Object): ZIO[Any with Clock with Random, Nothing, (ID, Date)] = {
     for {
-      seed <- ZIO.accessM[Random](_.random.nextLong)
+      seed <- ZIO.accessM[Random](_.random.nextInt)
       ts   <- getNowTime
     } yield {
-      val concatId: Long = seed * item.hashCode * ts
-      (concatId.toLong, ts)
+      val concatId: ID = ts + "-" + Math.abs(item.hashCode) + "-" + Math.abs(seed)
+      (concatId, ts)
     }
   }
 }

@@ -17,12 +17,11 @@
 package com.leobenkel.vibe.server.Utils
 
 import akka.http.scaladsl.marshalling._
-import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.server._
 import akka.http.scaladsl.util.FastFuture._
 import zio._
 
-import scala.concurrent.{Future, Promise}
+import scala.concurrent._
 import scala.language.implicitConversions
 import scala.util.{Failure, Success}
 
@@ -30,24 +29,6 @@ import scala.util.{Failure, Success}
   * A special set of akka-http directives that take ZIOs, run them and marshalls them.
   */
 trait ZIODirectives extends DefaultRuntime {
-  implicit def zioMarshaller[A](
-    implicit m1: Marshaller[A, HttpResponse],
-    m2:          Marshaller[Throwable, HttpResponse]
-  ): Marshaller[Task[A], HttpResponse] =
-    Marshaller { _ => a =>
-      {
-        val r = a.foldM(
-          e => Task.fromFuture(implicit ec => m2(e)),
-          a => Task.fromFuture(implicit ec => m1(a))
-        )
-
-        val p = Promise[List[Marshalling[HttpResponse]]]()
-
-        unsafeRunAsync(r)(_.fold(e => p.failure(e.squash), p.success))
-
-        p.future
-      }
-    }
 
   private def fromFunction[A, B](f: A => Future[B]): ZIO[A, Throwable, B] =
     for {
@@ -56,7 +37,7 @@ trait ZIODirectives extends DefaultRuntime {
     } yield b
 
   implicit def zioRoute(z: ZIO[Any, Throwable, Route]): Route = ctx => {
-    val p = Promise[RouteResult]()
+    val p = scala.concurrent.Promise[RouteResult]()
 
     val f = z.flatMap(r => fromFunction(r)).provide(ctx)
 
@@ -78,7 +59,6 @@ trait ZIODirectives extends DefaultRuntime {
     */
   def zioCompleteOrRecoverWith(magnet: ZIOCompleteOrRecoverWithMagnet): Directive1[Throwable] =
     magnet.directive
-
 }
 
 object ZIODirectives extends ZIODirectives

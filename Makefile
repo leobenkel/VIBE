@@ -1,0 +1,5 @@
+
+
+
+start:
+	sbt ~server/reStart
