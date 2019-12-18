@@ -1,6 +1,8 @@
 package com.leobenkel.vibe.core.Schemas
 
 import com.leobenkel.vibe.core.DBOperations.Delete
+import com.leobenkel.vibe.core.Schemas
+import com.leobenkel.vibe.core.Schemas.Traits.Votable.{FOREIGN_ID, FOREIGN_TABLE}
 import com.leobenkel.vibe.core.Schemas.Traits._
 import com.leobenkel.vibe.core.Services.Database
 import com.leobenkel.vibe.core.Utils.SchemaTypes._
@@ -88,4 +90,7 @@ object UserVotes extends TableRef[(User.PK, Votable.FOREIGN_ID, Votable.FOREIGN_
     }
   }
 
+  override def idFromString(s: String): (Schemas.User.PK, FOREIGN_ID, FOREIGN_TABLE) = {
+    ???
+  }
 }

@@ -13,6 +13,8 @@ trait TableRef[PRIMARY_KEY, ROW_TYPE <: SchemaBase[PRIMARY_KEY]] {
 
   def getTableName: TABLE_NAME
 
+  def idFromString(s: String): PK
+
   final def getId(row: ROW_TYPE): PK = row.id
 
   final def makeQueryOne(id: PK): QueryOne[PRIMARY_KEY, ROW_TYPE] =

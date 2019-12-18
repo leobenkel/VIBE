@@ -1,6 +1,6 @@
 package com.leobenkel.vibe.server.Routes.Utils
 
-import akka.http.scaladsl.model.{StatusCode, StatusCodes}
+import akka.http.scaladsl.model.{HttpMethod, StatusCode, StatusCodes}
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import com.leobenkel.vibe.server.Messages._
@@ -10,10 +10,11 @@ import scala.reflect.ClassTag
 
 private[Routes] trait RouteTrait {
   def parent: Option[RouteTraitWithChild] = None
-  def url: String
+  def url:    String
+  def method: HttpMethod
   final def getParent: Option[RouteTraitWithChild] = parent
 
-  final def getFullUrl: String = {
+  lazy final val getFullUrl: String = {
     getParent match {
       case None    => s"/$url"
       case Some(p) => s"${p.getFullUrl}/$url"

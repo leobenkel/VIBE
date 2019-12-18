@@ -1,11 +1,14 @@
 package com.leobenkel.vibe.server.Routes.Utils
 
 import akka.http.scaladsl.common.NameReceptacle
+import akka.http.scaladsl.model.{HttpMethod, HttpMethods}
 import akka.http.scaladsl.server.Directives.{complete, get, path, _}
 import akka.http.scaladsl.server.{Directive, Route}
 import com.leobenkel.vibe.server.Messages.Message
 
 private[Routes] trait RouteTraitWithGet[A] extends RouteTrait {
+  lazy final override val method: HttpMethod = HttpMethods.GET
+
   final override def route: Route = {
     path(url) {
       get {

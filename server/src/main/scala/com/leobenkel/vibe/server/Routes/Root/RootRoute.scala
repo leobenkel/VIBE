@@ -1,15 +1,16 @@
 package com.leobenkel.vibe.server.Routes.Root
 
-import com.leobenkel.vibe.server.Routes.Utils.{RouteTrait, RouteTraitWithChild}
-import akka.http.scaladsl.server.Route
+import akka.http.scaladsl.model.{HttpMethod, HttpMethods}
 import akka.http.scaladsl.server.Directives._
-import com.leobenkel.vibe.server.Messages.{Message, MessageStatus, MessageWithContent}
-import io.circe.generic.auto._
+import akka.http.scaladsl.server.Route
+import com.leobenkel.vibe.server.Messages._
 import com.leobenkel.vibe.server.Routes.Utils.RouteUtils._
-
+import com.leobenkel.vibe.server.Routes.Utils.{RouteTrait, RouteTraitWithChild}
+import io.circe.generic.auto._
 
 private[Routes] case class RootRoute(root: RouteTraitWithChild) extends RouteTrait {
-  override val url: String = ""
+  lazy final override val url:    String = ""
+  lazy final override val method: HttpMethod = HttpMethods.GET
 
   override def route: Route = {
     pathSingleSlash(routeContent) ~ super.route

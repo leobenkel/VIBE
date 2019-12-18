@@ -3,9 +3,10 @@ package com.leobenkel.vibe.server.Routes.Utils
 private[Routes] object RouteUtils {
 
   case class RouteDescriptions(
-    url:   String,
-    depth: Int,
-    path:  Seq[RouteDescriptions]
+    url:    String,
+    depth:  Int,
+    method: String,
+    path:   Seq[RouteDescriptions]
   )
 
   def getRoutes(
@@ -17,12 +18,14 @@ private[Routes] object RouteUtils {
         RouteDescriptions(
           url = r.getFullUrl,
           depth = depth,
+          method = r.method.value,
           path = getRoutes(routes = r.getChildRoute, depth = depth + 1)
         )
       case r: RouteTrait =>
         RouteDescriptions(
           url = r.getFullUrl,
           depth = depth,
+          method = r.method.value,
           path = Seq.empty
         )
     }

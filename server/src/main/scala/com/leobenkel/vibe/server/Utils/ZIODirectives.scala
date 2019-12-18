@@ -17,60 +17,18 @@
 package com.leobenkel.vibe.server.Utils
 
 import akka.http.scaladsl.marshalling._
-import akka.http.scaladsl.model.HttpResponse
 import akka.http.scaladsl.server._
 import akka.http.scaladsl.util.FastFuture._
-import com.leobenkel.vibe.server.Messages._
-import io.circe.Encoder
 import zio._
 
 import scala.concurrent._
 import scala.language.implicitConversions
-import scala.reflect.ClassTag
 import scala.util.{Failure, Success}
 
 /**
   * A special set of akka-http directives that take ZIOs, run them and marshalls them.
   */
 trait ZIODirectives extends DefaultRuntime {
-
-  case class MarshallerWrap[A: ClassTag](
-    operation: String,
-    tableName: String
-  )(
-    implicit val encoder: Encoder[A]
-  ) {
-    implicit def zioMarshaller(
-      implicit m1: Marshaller[MessageWithContent[A], HttpResponse],
-      m2:          Marshaller[Message, HttpResponse]
-    ): Marshaller[Task[A], HttpResponse] =
-      Marshaller { _: ExecutionContext => a: Task[A] =>
-        {
-          val r = a.foldM(
-            (e: Throwable) => {
-              val eMessage = ErrorMessage(operation)(e.toString)
-              Task.fromFuture(implicit ec => m2(eMessage))
-            },
-            (a: A) => {
-              val wrappedM = MessageWithContent(
-                operation = operation,
-                status = MessageStatus.Success,
-                fieldName = tableName
-              )(
-                a
-              )
-              Task.fromFuture(implicit ec => m1(wrappedM))
-            }
-          )
-
-          val p = scala.concurrent.Promise[List[Marshalling[HttpResponse]]]()
-
-          unsafeRunAsync(r)(_.fold(e => p.failure(e.squash), output => p.success(output)))
-
-          p.future
-        }
-      }
-  }
 
   private def fromFunction[A, B](f: A => Future[B]): ZIO[A, Throwable, B] =
     for {

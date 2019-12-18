@@ -1,0 +1,91 @@
+package com.leobenkel.vibe.server.Utils
+
+import akka.http.scaladsl.marshalling.{Marshaller, Marshalling}
+import akka.http.scaladsl.model.HttpResponse
+import com.leobenkel.vibe.server.Messages._
+import io.circe.Encoder
+import zio._
+
+import scala.concurrent.ExecutionContext
+import scala.reflect.ClassTag
+
+object MarshallerWrap extends DefaultRuntime {
+  def apply[A: ClassTag](
+    operation:           String,
+    tableName:           String,
+    missingErrorMessage: => String
+  )(
+    implicit encoder: Encoder[A]
+  ): Marshaller[Task[Option[A]], HttpResponse] = {
+    def zioMarshaller(
+      implicit m1: Marshaller[MessageWithContent[A], HttpResponse],
+      m2:          Marshaller[Message, HttpResponse]
+    ): Marshaller[Task[Option[A]], HttpResponse] =
+      Marshaller { _: ExecutionContext => a: Task[Option[A]] =>
+        {
+          val r: ZIO[Any, Throwable, List[Marshalling[HttpResponse]]] = a.foldM(
+            (e: Throwable) => {
+              Task.fromFuture(implicit ec => m2(ErrorMessage(operation)(e.toString)))
+            }, {
+              case Some(a) =>
+                val wrappedM = MessageWithContent(
+                  operation = operation,
+                  status = MessageStatus.Success,
+                  fieldName = tableName
+                )(a)
+                Task.fromFuture(implicit ec => m1(wrappedM))
+              case None =>
+                Task.fromFuture(implicit ec => m2(ErrorMessage(operation)(missingErrorMessage)))
+            }
+          )
+
+          val p = scala.concurrent.Promise[List[Marshalling[HttpResponse]]]()
+
+          unsafeRunAsync(r)(_.fold(e => p.failure(e.squash), output => p.success(output)))
+
+          p.future
+        }
+      }
+    zioMarshaller
+  }
+
+  def boolean[A: ClassTag](
+    operation:           String,
+    tableName:           String,
+    fieldName:           String,
+    missingErrorMessage: => String
+  )(
+    implicit encoder: Encoder[A]
+  ): Marshaller[Task[(Boolean, A)], HttpResponse] = {
+    def zioMarshaller(
+      implicit m1: Marshaller[MessageWithContent[A], HttpResponse],
+      m2:          Marshaller[Message, HttpResponse]
+    ): Marshaller[Task[(Boolean, A)], HttpResponse] =
+      Marshaller { _: ExecutionContext => a: Task[(Boolean, A)] =>
+        {
+          val r: ZIO[Any, Throwable, List[Marshalling[HttpResponse]]] = a.foldM(
+            (e: Throwable) => {
+              Task.fromFuture(implicit ec => m2(ErrorMessage(operation)(e.toString)))
+            }, {
+              case (true, item) =>
+                val wrappedM = MessageWithContent(
+                  operation = operation,
+                  status = MessageStatus.Success,
+                  fieldName = s"$tableName-$fieldName"
+                )(item)
+                Task.fromFuture(implicit ec => m1(wrappedM))
+              case (false, _) =>
+                Task.fromFuture(implicit ec => m2(ErrorMessage(operation)(missingErrorMessage)))
+            }
+          )
+
+          val p = scala.concurrent.Promise[List[Marshalling[HttpResponse]]]()
+
+          unsafeRunAsync(r)(_.fold(e => p.failure(e.squash), output => p.success(output)))
+
+          p.future
+        }
+      }
+    zioMarshaller
+  }
+}

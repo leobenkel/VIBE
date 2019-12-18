@@ -1,5 +1,6 @@
 package com.leobenkel.vibe.server.Routes.Utils
 
+import akka.http.scaladsl.model.{HttpMethod, HttpMethods}
 import akka.http.scaladsl.server.Directives.{as, complete, entity, path, post, _}
 import akka.http.scaladsl.server.Route
 import com.leobenkel.vibe.server.Messages._
@@ -8,6 +9,7 @@ import io.circe.parser.decode
 
 private[Routes] trait RouteTraitWithPost[A, B] extends RouteTrait {
   implicit val da: io.circe.Decoder[A]
+  lazy final override val method: HttpMethod = HttpMethods.POST
 
   final override def route: Route = {
     path(url) {
