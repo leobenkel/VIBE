@@ -49,6 +49,16 @@ object MarshallerWrap extends DefaultRuntime {
     zioMarshaller
   }
 
+  def message(): Marshaller[Message, HttpResponse] = {
+    def marshaller(
+      implicit m2: Marshaller[Message, HttpResponse]
+    ): Marshaller[Message, HttpResponse] =
+      Marshaller { implicit ex: ExecutionContext => a: Message =>
+        m2(a)
+      }
+    marshaller
+  }
+
   def collection[A: ClassTag](
     operation:           String,
     tableName:           String,

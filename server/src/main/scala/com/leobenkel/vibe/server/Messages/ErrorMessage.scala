@@ -5,7 +5,7 @@ import io.circe.Encoder
 import scala.reflect.ClassTag
 
 object ErrorMessage {
-  def apply(operation: String)(message: String): Message = {
+  def apply(operation: => String)(message: => String): Message = {
     Message.failed(operation, message)
   }
 

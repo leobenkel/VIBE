@@ -12,10 +12,8 @@ import com.leobenkel.vibe.core.Utils.SchemaTypes.TABLE_NAME
 import com.leobenkel.vibe.server.Messages.Message
 import com.leobenkel.vibe.server.Utils.MarshallerWrap
 import io.circe.Encoder
-import zio.clock.Clock
+import zio.Task
 import zio.console.Console
-import zio.random.Random
-import zio.{Task, ZIO}
 
 import scala.reflect.ClassTag
 

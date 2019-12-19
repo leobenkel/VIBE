@@ -1,6 +1,6 @@
 package com.leobenkel.vibe.server.Routes.Utils
 
-import akka.http.scaladsl.model.{HttpMethod, StatusCode, StatusCodes}
+import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
 import com.leobenkel.vibe.server.Messages._
