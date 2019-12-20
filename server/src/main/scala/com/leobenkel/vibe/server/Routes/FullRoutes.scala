@@ -5,9 +5,9 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.directives.DebuggingDirectives
 import akka.http.scaladsl.server.{Route, _}
 import com.leobenkel.vibe.core.Services.Database
-import com.leobenkel.vibe.server.Environment.LiveEnvironment
+import com.leobenkel.vibe.server.Environment.{Config, LiveEnvironment}
 import com.leobenkel.vibe.server.Messages.ErrorMessage
-import com.leobenkel.vibe.server.Routes.Root.ModelRootRoute
+import com.leobenkel.vibe.server.Routes.Root.{HtmlRoute, ModelRootRoute}
 import com.leobenkel.vibe.server.Routes.Utils._
 import com.leobenkel.vibe.server.Schemas.ModelPickler
 import com.leobenkel.vibe.server.Utils.ZIODirectives
@@ -25,13 +25,16 @@ trait FullRoutes
 //    with HTMLService
     {
 
-  def actor: ActorSystem
+  def actor:  ActorSystem
+  def config: Config.Service
 //  private val runtime: DefaultRuntime = new DefaultRuntime() {}
   protected def env: Any with Database with Console with Clock with Random
-  private val self: FullRoutes = this
-  private val log:  LoggingAdapter = Logging.getLogger(actor.actorSystem, this)
+  private val self:             FullRoutes = this
+  private val log:              LoggingAdapter = Logging.getLogger(actor.actorSystem, this)
+  private val staticContentDir: String = config.getLocalString("staticContentDir")
 
   override private[Routes] val getChildRoute: Seq[RouteTrait] = Seq(
+    HtmlRoute(staticContentDir),
     new ModelRootRoute {
       override protected def env: Any with Database with Console with Clock with Random = self.env
     }
