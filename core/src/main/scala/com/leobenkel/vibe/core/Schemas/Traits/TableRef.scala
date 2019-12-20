@@ -3,6 +3,7 @@ package com.leobenkel.vibe.core.Schemas.Traits
 import com.leobenkel.vibe.core.DBOperations
 import com.leobenkel.vibe.core.DBOperations._
 import com.leobenkel.vibe.core.Schemas._
+import com.leobenkel.vibe.core.Utils.DatabaseException
 import com.leobenkel.vibe.core.Utils.SchemaTypes._
 import zio.{Task, ZIO}
 
@@ -50,8 +51,21 @@ trait TableRef[PRIMARY_KEY, ROW_TYPE <: SchemaBase[PRIMARY_KEY]] {
   final def makeInsert(row: ROW_TYPE): Insert[ROW_TYPE] =
     DBOperations.Insert(getTableName, row)
 
-  final def insert(row: ROW_TYPE): QueryZIO[Boolean] =
-    makeInsert(row).act
+  final def insert(row: ROW_TYPE): QueryZIO[ROW_TYPE] =
+    makeInsert(row).act.map {
+      case true  => row
+      case false => throw DatabaseException(s"Could not 'insert' record: $row")
+    }
+
+  final def makeUpdate(row: ROW_TYPE): Update[ROW_TYPE] =
+    DBOperations.Update(getTableName, row)
+
+  final def update(row: ROW_TYPE): QueryZIO[ROW_TYPE] =
+    makeUpdate(row).act.map {
+      case true  => row
+      case false => throw DatabaseException(s"Was not able to update record: $row")
+    }
+
 }
 
 object TableRef {

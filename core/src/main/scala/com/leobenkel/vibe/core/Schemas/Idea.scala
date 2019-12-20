@@ -19,13 +19,16 @@ case class Idea(
   enrolledUserIds:   Set[User.PK],
   tagsIds:           Set[Tag.PK],
   commentIds:        Set[Comment.PK]
-) extends SchemaBase[ID] with Commentable with Votable with Updatable[ID, Idea] {
+) extends SchemaBase[Idea.PK] with Commentable with Votable with Updatable[Idea.PK, Idea]
+    with SchemaT[Idea.PK, Idea] {
   lazy final override val toString: String = s"Idea(ID:$id, T:'$title', A:$authorId, " +
     s"E:${enrolledUserIds.size}, T:${tagsIds.size}, C:${commentIds.size})"
   lazy final override val get:          Idea = this
   lazy final override val getTableTool: TableRef[PK, Idea] = Idea
   lazy final val score: ZIO[Any with Database with Console, Throwable, Int] =
     votes.flatMap(_.score).map(_ + 1)
+
+  lazy final override val isUnique: WHERE_CLAUSE[Idea] = (i: Idea) => { i.title == this.title }
 
   lazy final val getAuthor: QueryZIO[Option[User]] = User.queryOne(authorId)
   lazy final val tags:      QueryZIO[Seq[Tag]] = Tag.querySeveral(tagsIds)

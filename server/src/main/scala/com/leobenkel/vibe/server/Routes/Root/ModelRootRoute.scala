@@ -34,7 +34,8 @@ trait ModelRootRoute extends RouteTraitWithChild {
         lazy final override val getTableRef: TableRef[Comment.PK, Comment] = Comment
         lazy final override val parent:      Option[RouteTraitWithChild] = Some(self)
 
-        override def make(i: INPUT): ZCREATE[Comment] = Comment.apply(i._1, i._2, i._3, i._4)
+        override def make(i: INPUT): ZCREATE[Comment.PK, Comment] =
+          Comment.apply(i._1, i._2, i._3, i._4)
 
         override def httpCreateSchemaForm(): Directive[INPUT] =
           formFields(
@@ -54,7 +55,7 @@ trait ModelRootRoute extends RouteTraitWithChild {
         lazy final override val getTableRef: TableRef[Idea.PK, Idea] = Idea
         lazy final override val parent:      Option[RouteTraitWithChild] = Some(self)
 
-        override def make(i: INPUT): ZCREATE[Idea] =
+        override def make(i: INPUT): ZCREATE[Idea.PK, Idea] =
           Idea.apply(
             title = i._1,
             description = i._2,
@@ -79,7 +80,7 @@ trait ModelRootRoute extends RouteTraitWithChild {
       lazy final override val getTableRef: TableRef[Skill.PK, Skill] = Skill
       lazy final override val parent:      Option[RouteTraitWithChild] = Some(self)
 
-      override def make(i: (String, Boolean)): ZCREATE[Skill] =
+      override def make(i: (String, Boolean)): ZCREATE[Skill.PK, Skill] =
         Skill.apply(i._1, i._2)
 
       override def httpCreateSchemaForm(): Directive[(String, Boolean)] =
@@ -93,7 +94,7 @@ trait ModelRootRoute extends RouteTraitWithChild {
       lazy final override val getTableRef: TableRef[Tag.PK, Tag] = Tag
       lazy final override val parent:      Option[RouteTraitWithChild] = Some(self)
 
-      override def make(i: (String, Boolean)): ZCREATE[Tag] =
+      override def make(i: (String, Boolean)): ZCREATE[Tag.PK, Tag] =
         Tag.apply(i._1, i._2)
 
       override def httpCreateSchemaForm(): Directive[(String, Boolean)] =
@@ -108,7 +109,7 @@ trait ModelRootRoute extends RouteTraitWithChild {
         lazy final override val getTableRef: TableRef[User.PK, User] = User
         lazy final override val parent:      Option[RouteTraitWithChild] = Some(self)
 
-        override def make(i: INPUT): ZCREATE[User] =
+        override def make(i: INPUT): ZCREATE[User.PK, User] =
           User.apply(
             name = i._1,
             email = i._2,
@@ -134,7 +135,7 @@ trait ModelRootRoute extends RouteTraitWithChild {
         lazy final override val getTableRef: TableRef[UserVotes.PK, UserVotes] = UserVotes
         lazy final override val parent:      Option[RouteTraitWithChild] = Some(self)
 
-        override def make(i: INPUT): ZCREATE[UserVotes] =
+        override def make(i: INPUT): ZCREATE[UserVotes.PK, UserVotes] =
           UserVotes.apply(i._1, i._2, i._3, i._4)
 
         override def httpCreateSchemaForm(): Directive[INPUT] =

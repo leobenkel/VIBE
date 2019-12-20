@@ -13,13 +13,14 @@ case class Tag(
   updateTimestamp:   Date,
   name:              String,
   isVisible:         Boolean
-) extends SchemaBase[ID] with Updatable[ID, Tag] {
+) extends SchemaBase[Tag.PK] with Updatable[Tag.PK, Tag] with SchemaT[Tag.PK, Tag] {
   override def update(updateTimestamp: Date): Tag = {
     this.update(updateTimestamp = updateTimestamp)
   }
 
   lazy final override val get:          Tag = this
   lazy final override val getTableTool: TableRef[PK, Tag] = Tag
+  lazy final override val isUnique:     WHERE_CLAUSE[Tag] = (t: Tag) => { t.name == this.name }
 }
 
 object Tag extends TableRef[ID, Tag] {

@@ -18,7 +18,8 @@ case class Comment(
   attachedToId:      Commentable.FOREIGN_ID,
   attachedToTable:   Commentable.FOREIGN_TABLE,
   commentIds:        Set[Comment.PK]
-) extends SchemaBase[ID] with Commentable with Updatable[ID, Comment] {
+) extends SchemaBase[Comment.PK] with Commentable with Updatable[Comment.PK, Comment]
+    with SchemaT[Comment.PK, Comment] {
   override def getTableName: TABLE_NAME = Comment.getTableName
 
   lazy final val getParent: ZIO[Any with Database with Console, Throwable, Option[Commentable]] = {
@@ -32,6 +33,12 @@ case class Comment(
 
   lazy final override val get:          Comment = this
   lazy final override val getTableTool: TableRef[PK, Comment] = Comment
+  lazy final override val isUnique: WHERE_CLAUSE[Comment] = (c: Comment) => {
+    c.authorId == this.authorId &&
+      c.content == this.content &&
+      c.attachedToId == this.attachedToId &&
+      c.attachedToTable == this.attachedToTable
+  }
 }
 
 object Comment extends TableRef[ID, Comment] {

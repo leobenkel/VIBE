@@ -13,13 +13,14 @@ case class Skill(
   updateTimestamp:   Date,
   name:              String,
   isVisible:         Boolean
-) extends SchemaBase[ID] with Updatable[ID, Skill] {
+) extends SchemaBase[Skill.PK] with Updatable[Skill.PK, Skill] with SchemaT[Skill.PK, Skill] {
   lazy final override val get:          Skill = this
   lazy final override val getTableTool: TableRef[PK, Skill] = Skill
 
-  override def update(updateTimestamp: Date): Skill = {
+  override def update(updateTimestamp: Date): Skill =
     this.update(updateTimestamp = updateTimestamp)
-  }
+
+  lazy final override val isUnique: WHERE_CLAUSE[Skill] = (s: Skill) => { s.name == this.name }
 }
 
 object Skill extends TableRef[ID, Skill] {

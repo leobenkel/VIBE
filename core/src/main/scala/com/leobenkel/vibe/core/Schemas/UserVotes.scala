@@ -18,8 +18,8 @@ case class UserVotes(
   attachedToId:      Votable.FOREIGN_ID,
   attachedToTable:   Votable.FOREIGN_TABLE,
   vote:              Int
-) extends SchemaBase[(User.PK, Votable.FOREIGN_ID, Votable.FOREIGN_TABLE)]
-    with Updatable[(User.PK, Votable.FOREIGN_ID, Votable.FOREIGN_TABLE), UserVotes] {
+) extends SchemaBase[UserVotes.PK] with Updatable[UserVotes.PK, UserVotes]
+    with SchemaT[UserVotes.PK, UserVotes] {
   lazy final override val get:          UserVotes = this
   lazy final override val getTableTool: TableRef[PK, UserVotes] = UserVotes
   @transient lazy val realVote:         IO[RuntimeException, VoteValue] = VoteValue.parse(vote)
@@ -47,9 +47,15 @@ case class UserVotes(
   override def id: (User.PK, Votable.FOREIGN_ID, Votable.FOREIGN_TABLE) =
     (userId, attachedToId, attachedToTable)
 
-  override def update(updateTimestamp: Date): UserVotes = {
+  override def update(updateTimestamp: Date): UserVotes =
     this.update(updateTimestamp = updateTimestamp)
+
+  lazy final override val isUnique: WHERE_CLAUSE[UserVotes] = (uv: UserVotes) => {
+    uv.userId == this.userId &&
+      uv.attachedToId == this.attachedToId &&
+      uv.attachedToTable == this.attachedToTable
   }
+
 }
 
 object UserVotes extends TableRef[(User.PK, Votable.FOREIGN_ID, Votable.FOREIGN_TABLE), UserVotes] {

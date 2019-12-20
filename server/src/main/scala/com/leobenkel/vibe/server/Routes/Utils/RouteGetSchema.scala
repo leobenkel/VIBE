@@ -6,7 +6,7 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{Directive1, Route}
 import akka.http.scaladsl.unmarshalling.FromStringUnmarshaller
-import com.leobenkel.vibe.core.Schemas.Traits.{SchemaBase, TableRef}
+import com.leobenkel.vibe.core.Schemas.Traits.{SchemaT, TableRef}
 import com.leobenkel.vibe.core.Services.Database
 import com.leobenkel.vibe.core.Utils.SchemaTypes.TABLE_NAME
 import com.leobenkel.vibe.server.Messages.Message
@@ -17,12 +17,12 @@ import zio.console.Console
 
 import scala.reflect.ClassTag
 
-trait RouteGetSchema[PK, A <: SchemaBase[PK]] extends RouteTrait {
+trait RouteGetSchema[PK, ROW <: SchemaT[PK, ROW]] extends RouteTrait {
   lazy final override val url:    String = "get"
   lazy final override val method: HttpMethod = HttpMethods.GET
-  protected def getTableRef:  TableRef[PK, A]
-  protected def encoder:      Encoder[A]
-  protected def tag:          ClassTag[A]
+  protected def getTableRef:  TableRef[PK, ROW]
+  protected def encoder:      Encoder[ROW]
+  protected def tag:          ClassTag[ROW]
   protected def environment:  Any with Database with Console
   protected def unmarshaller: FromStringUnmarshaller[PK]
 
@@ -33,9 +33,9 @@ trait RouteGetSchema[PK, A <: SchemaBase[PK]] extends RouteTrait {
       get {
         methodGetRetrieveParameters().tapply { methodGetParameters =>
           complete {
-            implicit val c: ClassTag[A] = tag
-            implicit val e: Encoder[A] = encoder
-            implicit val m: Marshaller[Task[Option[A]], HttpResponse] = MarshallerWrap.apply[A](
+            implicit val c: ClassTag[ROW] = tag
+            implicit val e: Encoder[ROW] = encoder
+            implicit val m: Marshaller[Task[Option[ROW]], HttpResponse] = MarshallerWrap.apply[ROW](
               operation = getFullUrl,
               tableName = tableName,
               missingErrorMessage = s"Cannot find a '$tableName' for ID:'${methodGetParameters._1}'"
@@ -52,7 +52,7 @@ trait RouteGetSchema[PK, A <: SchemaBase[PK]] extends RouteTrait {
   protected def methodGetRetrieveParameters(): Directive1[PK] =
     parameter('id.as[PK](unmarshaller))
 
-  protected def methodGetOutput(methodGetParameters: Tuple1[PK]): Task[Option[A]] = {
+  protected def methodGetOutput(methodGetParameters: Tuple1[PK]): Task[Option[ROW]] = {
     getTableRef
       .queryOne(methodGetParameters._1)
       .provide(environment)
@@ -69,13 +69,13 @@ trait RouteGetSchema[PK, A <: SchemaBase[PK]] extends RouteTrait {
 }
 
 object RouteGetSchema {
-  def apply[PK, A <: SchemaBase[PK], INPUT](
-    self: RouteSchema[PK, A, INPUT]
-  ): RouteGetSchema[PK, A] =
-    new RouteGetSchema[PK, A] {
-      lazy final override val getTableRef:  TableRef[PK, A] = self.getTableRef
-      lazy final override val encoder:      Encoder[A] = self.encoder
-      lazy final override val tag:          ClassTag[A] = self.tag
+  def apply[PK, ROW <: SchemaT[PK, ROW], INPUT](
+    self: RouteSchema[PK, ROW, INPUT]
+  ): RouteGetSchema[PK, ROW] =
+    new RouteGetSchema[PK, ROW] {
+      lazy final override val getTableRef:  TableRef[PK, ROW] = self.getTableRef
+      lazy final override val encoder:      Encoder[ROW] = self.encoder
+      lazy final override val tag:          ClassTag[ROW] = self.tag
       lazy final override val environment:  Any with Database with Console = self.environment
       lazy final override val unmarshaller: FromStringUnmarshaller[PK] = self.unmarshaller
       lazy final override val parent:       Option[RouteTraitWithChild] = Some(self)

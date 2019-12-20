@@ -16,7 +16,7 @@ case class User(
   email:             String,
   oauthToken:        OAuth,
   skills:            Set[Skill.PK]
-) extends SchemaBase[ID] with Updatable[ID, User] {
+) extends SchemaBase[User.PK] with Updatable[User.PK, User] with SchemaT[User.PK, User] {
   lazy final override val toString: String = s"User(ID:$id, N:$name, E:$email, S:${skills.size})"
 
   lazy final override val get:          User = this
@@ -33,6 +33,8 @@ case class User(
   override def update(updateTimestamp: Date): User = {
     this.update(updateTimestamp = updateTimestamp)
   }
+
+  lazy final override val isUnique: WHERE_CLAUSE[User] = (u: User) => { u.email == this.email }
 }
 
 object User extends TableRef[ID, User] {
