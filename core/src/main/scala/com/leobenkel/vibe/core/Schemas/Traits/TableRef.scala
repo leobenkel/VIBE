@@ -10,6 +10,8 @@ import zio.{Task, ZIO}
 import scala.util.Try
 
 trait TableRef[PRIMARY_KEY, ROW_TYPE <: SchemaBase[PRIMARY_KEY]] {
+  // TODO: Use `Skill` to add roles and safety in all operations.
+
   type PK = PRIMARY_KEY
 
   def getTableName: TABLE_NAME
