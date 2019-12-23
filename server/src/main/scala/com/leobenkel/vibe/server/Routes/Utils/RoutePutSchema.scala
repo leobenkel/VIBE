@@ -4,11 +4,12 @@ import akka.http.scaladsl.marshalling.Marshaller
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
+import com.leobenkel.vibe.core.Messages.Message
 import com.leobenkel.vibe.core.Schemas.Traits._
 import com.leobenkel.vibe.core.Services.Database
 import com.leobenkel.vibe.core.Utils.Log
 import com.leobenkel.vibe.core.Utils.SchemaTypes.TABLE_NAME
-import com.leobenkel.vibe.server.Messages.Message
+import com.leobenkel.vibe.server.Messages.MessageSerializer
 import com.leobenkel.vibe.server.Routes.Utils.RoutePutSchema.ZCREATE
 import com.leobenkel.vibe.server.Utils.MarshallerWrap
 import io.circe.Encoder
@@ -65,7 +66,7 @@ trait RoutePutSchema[PK, ROW <: SchemaT[PK, ROW], INPUT] extends RouteTrait {
 
   protected def make(i: INPUT): Z_CREATE
 
-  final override protected def methodGetOutput(): Message =
+  final override protected def methodGetOutput(): MessageSerializer =
     error("PUT/POST method only")
 }
 

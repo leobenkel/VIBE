@@ -6,3 +6,5 @@ target
 .metals
 node_modules
 dist
+./core/js
+./core/jvm
