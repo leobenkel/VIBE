@@ -1,8 +1,6 @@
 
-
-
 start:
-	sbt ~server/reStart
+	sbt "; client/debugDist ; ~server/reStart"
 
 build_front:
 	sbt ~client/debugDist
