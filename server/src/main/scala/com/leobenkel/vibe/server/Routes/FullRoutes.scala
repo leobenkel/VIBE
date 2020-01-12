@@ -44,18 +44,12 @@ trait FullRoutes
 
   lazy private val rejectionHandler: RejectionHandler =
     RejectionHandler
-      .newBuilder().handleNotFound { request =>
-        request.complete {
-          val url = request.unmatchedPath.toString
-          HttpResponse.apply(
-            status = StatusCodes.NotFound,
-            headers = Nil,
-            entity = HttpEntity.apply(
-              ContentTypes.`application/json`,
-              ToMessage.ErrorMessage(url)(s"Path '$url' not found!").toJsonString
-            )
-          )
-        }
+      .newBuilder().handleNotFound {
+        ToMessage.makeError(
+          url = _.unmatchedPath.toString,
+          statusCodes = StatusCodes.NotFound,
+          message = s"Path '$url' not found!"
+        )
       }
       .result()
 

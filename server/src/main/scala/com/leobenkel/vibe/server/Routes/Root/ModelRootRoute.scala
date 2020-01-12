@@ -2,7 +2,7 @@ package com.leobenkel.vibe.server.Routes.Root
 
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
-import com.leobenkel.vibe.core.Messages.{Message, MessageStatus}
+import com.leobenkel.vibe.core.Messages.MessageStatus
 import com.leobenkel.vibe.core.Schemas.Traits._
 import com.leobenkel.vibe.core.Schemas.User.OAuth
 import com.leobenkel.vibe.core.Schemas._
@@ -38,7 +38,7 @@ trait ModelRootRoute extends RouteTraitWithChild {
         override def make(i: INPUT): ZCREATE[Comment.PK, Comment] =
           Comment.apply(i._1, i._2, i._3, i._4)
 
-        override def httpCreateSchemaForm(): Directive[INPUT] =
+        lazy final override val httpCreateSchemaForm: Directive[INPUT] =
           formFields(
             'authorId.as[User.PK],
             'content.as[String],
@@ -64,7 +64,7 @@ trait ModelRootRoute extends RouteTraitWithChild {
             tagsIds = i._4.toSet
           )
 
-        override def httpCreateSchemaForm(): Directive[INPUT] =
+        lazy final override val httpCreateSchemaForm: Directive[INPUT] =
           formFields(
             'title.as[String],
             'description.as[String],
@@ -81,10 +81,9 @@ trait ModelRootRoute extends RouteTraitWithChild {
       lazy final override val getTableRef: TableRef[Skill.PK, Skill] = Skill
       lazy final override val parent:      Option[RouteTraitWithChild] = Some(self)
 
-      override def make(i: (String, Boolean)): ZCREATE[Skill.PK, Skill] =
-        Skill.apply(i._1, i._2)
+      override def make(i: (String, Boolean)): ZCREATE[Skill.PK, Skill] = Skill.apply(i._1, i._2)
 
-      override def httpCreateSchemaForm(): Directive[(String, Boolean)] =
+      lazy final override val httpCreateSchemaForm: Directive[(String, Boolean)] =
         formFields('name.as[String], 'isVisible.as[Boolean])
     },
     new RouteSchema[Tag.PK, Tag, (String, Boolean)] {
@@ -95,10 +94,9 @@ trait ModelRootRoute extends RouteTraitWithChild {
       lazy final override val getTableRef: TableRef[Tag.PK, Tag] = Tag
       lazy final override val parent:      Option[RouteTraitWithChild] = Some(self)
 
-      override def make(i: (String, Boolean)): ZCREATE[Tag.PK, Tag] =
-        Tag.apply(i._1, i._2)
+      override def make(i: (String, Boolean)): ZCREATE[Tag.PK, Tag] = Tag.apply(i._1, i._2)
 
-      override def httpCreateSchemaForm(): Directive[(String, Boolean)] =
+      lazy final override val httpCreateSchemaForm: Directive[(String, Boolean)] =
         formFields('name.as[String], 'isVisible.as[Boolean])
     }, {
       type INPUT = (String, String, OAuth, Iterable[Skill.PK])
@@ -118,7 +116,7 @@ trait ModelRootRoute extends RouteTraitWithChild {
             skills = i._4.toSet
           )
 
-        override def httpCreateSchemaForm(): Directive[INPUT] =
+        lazy final override val httpCreateSchemaForm: Directive[INPUT] =
           formFields(
             'name.as[String],
             'email.as[String],
@@ -139,7 +137,7 @@ trait ModelRootRoute extends RouteTraitWithChild {
         override def make(i: INPUT): ZCREATE[UserVotes.PK, UserVotes] =
           UserVotes.apply(i._1, i._2, i._3, i._4)
 
-        override def httpCreateSchemaForm(): Directive[INPUT] =
+        lazy final override val httpCreateSchemaForm: Directive[INPUT] =
           formFields(
             'userId.as[User.PK],
             'votableType.as[TABLE_NAME],

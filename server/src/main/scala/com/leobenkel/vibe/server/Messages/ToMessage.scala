@@ -1,5 +1,7 @@
 package com.leobenkel.vibe.server.Messages
 
+import akka.http.scaladsl.model._
+import akka.http.scaladsl.server.{RequestContext, Route}
 import com.leobenkel.vibe.core.Messages.MessageStatus
 import io.circe.Encoder
 
@@ -17,6 +19,23 @@ object ToMessage {
   ) extends RichMessageSerializer[A] {
     lazy final override val getContent: A = content
     lazy final override val classTagA:  ClassTag[A] = implicitly
+  }
+
+  def makeError(
+    statusCodes: StatusCode,
+    message:     String,
+    url:         RequestContext => String = _.request._2.path.toString
+  ): Route = { request: RequestContext =>
+    request.complete {
+      HttpResponse.apply(
+        status = statusCodes,
+        headers = Nil,
+        entity = HttpEntity.apply(
+          ContentTypes.`application/json`,
+          ToMessage.ErrorMessage(url(request))(message).toJsonString
+        )
+      )
+    }
   }
 
   //    operation: String

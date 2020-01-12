@@ -20,7 +20,7 @@ private[Routes] trait RouteSchema[PK, ROW <: SchemaT[PK, ROW], INPUT] extends Ro
   def environment: Any with Database with Console with Clock with Random
   def getTableRef: TableRef[PK, ROW]
   def make(i: INPUT): RoutePutSchema.ZCREATE[PK, ROW]
-  def httpCreateSchemaForm(): Directive[INPUT]
+  def httpCreateSchemaForm: Directive[INPUT]
   lazy private val tableName:  TABLE_NAME = getTableRef.getTableName
   lazy final override val url: String = tableName
 
