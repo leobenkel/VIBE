@@ -3,6 +3,7 @@ package com.leobenkel.vibe.server.Routes.Utils
 import akka.http.scaladsl.model.{HttpMethod, HttpMethods}
 import akka.http.scaladsl.server.Directives.{as, complete, entity, path, post, _}
 import akka.http.scaladsl.server.Route
+import com.leobenkel.vibe.core.Messages.ErrorForJson
 import com.leobenkel.vibe.server.Messages._
 import io.circe.generic.auto._
 import io.circe.parser.decode
@@ -26,7 +27,7 @@ private[Routes] trait RouteTraitWithPost[A, B] extends RouteTrait {
 
   final protected def methodPostOutput(
     jsonInput: String
-  ): Either[MessageWithContent[ErrorForJson], MessageWithContent[B]] = {
+  ): Either[RichMessageSerializer[ErrorForJson], RichMessageSerializer[B]] = {
     decode[A](jsonInput) match {
       case Left(e) =>
         Left(
@@ -40,13 +41,13 @@ private[Routes] trait RouteTraitWithPost[A, B] extends RouteTrait {
     }
   }
 
-  protected def processCorrectEntity(data: A): MessageWithContent[B]
+  protected def processCorrectEntity(data: A): RichMessageSerializer[B]
 
-  protected def methodPostOutput(): Message = {
+  protected def methodPostOutput(): MessageSerializer = {
     error("Missing POST Json entity")
   }
 
-  protected def methodGetOutput(): Message = {
+  protected def methodGetOutput(): MessageSerializer = {
     error("POST method only")
   }
 }

@@ -1,4 +1,4 @@
-package com.leobenkel.vibe.server.Messages
+package com.leobenkel.vibe.core.Messages
 
 sealed trait MessageStatus
 

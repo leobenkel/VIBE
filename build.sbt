@@ -2,6 +2,9 @@ import java.nio.file.Files
 import java.nio.file.StandardCopyOption.REPLACE_EXISTING
 
 import org.apache.commons.io.FileUtils
+import sbtcrossproject.CrossPlugin.autoImport.crossProject
+
+import scala.language.postfixOps
 
 lazy val projectName = IO.readLines(new File("PROJECT_NAME")).head
 lazy val versionName = IO.readLines(new File("VERSION")).head
@@ -41,9 +44,27 @@ lazy val commonSettings = Seq(
   libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.5" % Test
 )
 
+lazy val circeDependencies = Seq(
+  libraryDependencies ++= Seq(
+    "io.circe" %% "circe-core"    % circeVersion,
+    "io.circe" %% "circe-generic" % circeVersion,
+    "io.circe" %% "circe-parser"  % circeVersion //,
+//    "io.circe" %% "circe-literal" % circeVersion
+  )
+)
+
+lazy val circeDependenciesJS = Seq(
+  libraryDependencies ++= Seq(
+    "io.circe" %%% "circe-core"    % circeVersion,
+    "io.circe" %%% "circe-generic" % circeVersion,
+    "io.circe" %%% "circe-parser"  % circeVersion //,
+//    "io.circe" %%% "circe-literal" % circeVersion
+  )
+)
+
 lazy val root = project
   .in(file("."))
-  .aggregate(server, core, client)
+  .aggregate(server, coreJVM, coreJS, client)
   .settings(
     basicSettings,
     name                          := projectName,
@@ -52,13 +73,23 @@ lazy val root = project
     Global / onChangedBuildSource := ReloadOnSourceChanges
   )
 
-lazy val core = (project in file("core"))
+lazy val core = crossProject(JSPlatform, JVMPlatform)
+  .in(file("core"))
   .settings(
     name := s"$projectName-core",
     basicSettings,
     commonSettings,
-    libraryDependencies += "dev.zio" %% "zio" % zioVersion withSources ()
+    libraryDependencies ++= Seq(
+      "dev.zio" %% "zio" % zioVersion withSources
+    )
   )
+  .jvmSettings(
+    libraryDependencies += "org.scala-js" %% "scalajs-stubs" % "0.6.31" % Provided
+  )
+  .jsSettings()
+
+lazy val coreJVM = core.jvm
+lazy val coreJS = core.js
 
 lazy val server = (project in file("server"))
   .configs(IntegrationTest)
@@ -67,35 +98,31 @@ lazy val server = (project in file("server"))
     name := s"$projectName-server",
     basicSettings,
     commonSettings,
+    circeDependencies,
     libraryDependencies ++= Seq(
-      "io.circe" %% "circe-core"    % circeVersion,
-      "io.circe" %% "circe-generic" % circeVersion,
-      "io.circe" %% "circe-parser"  % circeVersion
-    ),
-    libraryDependencies ++= Seq(
-      "dev.zio"               %% "zio"                      % zioVersion withSources (),
-      "dev.zio"               %% "zio-macros-core"          % "0.6.0" withSources (),
-      "com.typesafe.slick"    %% "slick"                    % slickVersion withSources (),
-      "com.typesafe.slick"    %% "slick-codegen"            % slickVersion withSources (),
-      "com.github.daddykotex" %% "courier"                  % "2.0.0" withSources (),
-      "com.github.pathikrit"  %% "better-files"             % "3.8.0" withSources (),
-      "com.typesafe.akka"     %% "akka-http"                % akkaHttpVersion,
-      "com.typesafe.akka"     %% "akka-http-spray-json"     % akkaHttpVersion,
-      "com.typesafe.akka"     %% "akka-actor-typed"         % akkaVersion,
-      "com.typesafe.akka"     %% "akka-stream"              % akkaVersion,
-      "ch.qos.logback"        % "logback-classic"           % "1.2.3",
-      "com.lihaoyi"           %% "upickle"                  % "0.8.0" withSources (),
-      "de.heikoseeberger"     %% "akka-http-upickle"        % "1.29.1" withSources (),
-      "com.typesafe.akka"     %% "akka-http-testkit"        % akkaHttpVersion % "it,test",
-      "com.typesafe.akka"     %% "akka-actor-testkit-typed" % akkaVersion % "it,test",
-      "com.typesafe.akka"     %% "akka-stream-testkit"      % akkaVersion % "it,test",
-      "org.scalatest"         %% "scalatest"                % "3.1.0" % "it,test",
-      "dev.zio"               %% "zio-test"                 % zioVersion % "it, test",
-      "dev.zio"               %% "zio-test-sbt"             % zioVersion % "it, test"
+      "dev.zio"               %% "zio"             % zioVersion withSources,
+      "dev.zio"               %% "zio-macros-core" % "0.6.0" withSources,
+      "com.typesafe.slick"    %% "slick"           % slickVersion withSources,
+      "com.typesafe.slick"    %% "slick-codegen"   % slickVersion withSources,
+      "com.github.daddykotex" %% "courier"         % "2.0.0" withSources,
+      "com.github.pathikrit"  %% "better-files"    % "3.8.0" withSources,
+      "com.typesafe.akka" %% "akka-http"            % akkaHttpVersion,
+      "com.typesafe.akka" %% "akka-http-spray-json" % akkaHttpVersion,
+      "com.typesafe.akka" %% "akka-actor-typed"     % akkaVersion,
+      "com.typesafe.akka" %% "akka-stream"          % akkaVersion,
+      "ch.qos.logback"    % "logback-classic"       % "1.2.3",
+      "com.lihaoyi"       %% "upickle"           % "0.8.0" withSources,
+      "de.heikoseeberger" %% "akka-http-upickle" % "1.29.1" withSources,
+      "com.typesafe.akka" %% "akka-http-testkit"        % akkaHttpVersion % "it,test",
+      "com.typesafe.akka" %% "akka-actor-testkit-typed" % akkaVersion     % "it,test",
+      "com.typesafe.akka" %% "akka-stream-testkit"      % akkaVersion     % "it,test",
+      "org.scalatest"     %% "scalatest"                % "3.1.0"         % "it,test",
+      "dev.zio"           %% "zio-test"                 % zioVersion      % "it, test",
+      "dev.zio"           %% "zio-test-sbt"             % zioVersion      % "it, test"
     ),
     testFrameworks ++= Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   )
-  .dependsOn(core)
+  .dependsOn(coreJVM)
 
 lazy val dist = TaskKey[File]("dist")
 
@@ -112,6 +139,7 @@ lazy val client = (project in file("client"))
   .configure(bundlerSettings)
   .settings(
     basicSettings,
+    circeDependenciesJS,
     debugDist := {
       val assets = (ThisBuild / baseDirectory).value / "client" / "src" / "main" / "web"
 
@@ -159,24 +187,25 @@ lazy val client = (project in file("client"))
     buildInfoKeys      := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion),
     buildInfoPackage   := "x.web",
     resolvers += Resolver.bintrayRepo("oyvindberg", "ScalajsReactTyped"),
+    libraryDependencies += "io.github.cquiroz" %%% "scala-java-time" % "2.0.0-RC2",
     libraryDependencies ++= Seq(
       ScalajsReactTyped.S.`semantic-ui-react`,
       ScalajsReactTyped.S.`stardust-ui__react-component-ref`,
-      "commons-io"                                    % "commons-io" % "2.6" withSources (),
-      "ru.pavkin" %%% "scala-js-momentjs"             % "0.10.0" withSources (),
-      "io.github.cquiroz" %%% "scala-java-time"       % "2.0.0-RC3" withSources (),
-      "io.github.cquiroz" %%% "scala-java-time-tzdb"  % "2.0.0-RC3_2019a" withSources (),
-      "org.scala-js" %%% "scalajs-dom"                % "0.9.7" withSources (),
-      "com.olvind" %%% "scalablytyped-runtime"        % "2.1.0",
-      "com.github.japgolly.scalajs-react" %%% "core"  % "1.5.0-RC2" withSources (),
-      "com.github.japgolly.scalajs-react" %%% "extra" % "1.5.0-RC2" withSources (),
-      "com.lihaoyi" %%% "upickle"                     % "0.8.0" withSources (),
-      "com.lihaoyi" %%% "scalatags"                   % "0.7.0" withSources (),
-      "com.github.japgolly.scalacss" %%% "core"       % "0.6.0-RC1" withSources (),
-      "com.github.japgolly.scalacss" %%% "ext-react"  % "0.6.0-RC1" withSources (),
-      "com.lihaoyi"                                   %% "upickle" % "0.8.0" % "test" withSources (),
-      "com.github.pathikrit"                          %% "better-files" % "3.8.0",
-      "org.scalatest"                                 %% "scalatest" % "3.1.0" % "test" withSources ()
+      "commons-io"                                   % "commons-io" % "2.6" withSources,
+      "ru.pavkin" %%% "scala-js-momentjs"            % "0.10.0" withSources,
+      "io.github.cquiroz" %%% "scala-java-time"      % "2.0.0-RC3" withSources,
+      "io.github.cquiroz" %%% "scala-java-time-tzdb" % "2.0.0-RC3_2019a" withSources,
+      "org.scala-js" %%% "scalajs-dom"               % "0.9.7" withSources,
+      "com.olvind" %%% "scalablytyped-runtime" % "2.1.0",
+      "com.github.japgolly.scalajs-react" %%% "core"  % "1.5.0-RC2" withSources,
+      "com.github.japgolly.scalajs-react" %%% "extra" % "1.5.0-RC2" withSources,
+      "com.lihaoyi" %%% "upickle"                     % "0.8.0" withSources,
+      "com.lihaoyi" %%% "scalatags"                   % "0.7.0" withSources,
+      "com.github.japgolly.scalacss" %%% "core"       % "0.6.0-RC1" withSources,
+      "com.github.japgolly.scalacss" %%% "ext-react"  % "0.6.0-RC1" withSources,
+      "com.lihaoyi"                                   %% "upickle" % "0.8.0" % Test withSources,
+      "com.github.pathikrit" %% "better-files" % "3.8.0",
+      "org.scalatest" %% "scalatest" % "3.1.0" % Test withSources
     ),
     scalacOptions ++= Seq(
       "-P:scalajs:sjsDefinedByDefault",
@@ -191,6 +220,7 @@ lazy val client = (project in file("client"))
     Test / unmanagedSourceDirectories    := Seq((Test / scalaSource).value),
     webpackDevServerPort                 := 8009
   )
+  .dependsOn(coreJS)
 
 lazy val bundlerSettings: Project => Project =
   _.enablePlugins(ScalaJSBundlerPlugin)

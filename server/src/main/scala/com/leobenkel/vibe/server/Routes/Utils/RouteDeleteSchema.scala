@@ -6,10 +6,11 @@ import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.{Directive1, Route}
 import akka.http.scaladsl.unmarshalling.FromStringUnmarshaller
+import com.leobenkel.vibe.core.Messages.Message
 import com.leobenkel.vibe.core.Schemas.Traits._
 import com.leobenkel.vibe.core.Services.Database
 import com.leobenkel.vibe.core.Utils.SchemaTypes.TABLE_NAME
-import com.leobenkel.vibe.server.Messages.Message
+import com.leobenkel.vibe.server.Messages.MessageSerializer
 import com.leobenkel.vibe.server.Utils.MarshallerWrap
 import io.circe.Encoder
 import zio.Task
@@ -64,7 +65,7 @@ trait RouteDeleteSchema[PK, ROW <: SchemaT[PK, ROW]] extends RouteTrait {
     }).provide(environment)
   }
 
-  final override protected def methodGetOutput(): Message =
+  final override protected def methodGetOutput(): MessageSerializer =
     error("DELETE method only")
 }
 

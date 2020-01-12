@@ -2,7 +2,9 @@ package com.leobenkel.vibe.server.Utils
 
 import akka.http.scaladsl.marshalling.{Marshaller, Marshalling}
 import akka.http.scaladsl.model.HttpResponse
-import com.leobenkel.vibe.server.Messages._
+import com.leobenkel.vibe.core.Messages._
+import com.leobenkel.vibe.server.Messages.ToMessage._
+import com.leobenkel.vibe.server.Messages.{MessageSerializer, RichMessageSerializer}
 import io.circe.{Encoder, Json}
 import zio._
 
@@ -18,8 +20,8 @@ object MarshallerWrap extends DefaultRuntime {
     implicit encoder: Encoder[A]
   ): Marshaller[Task[Option[A]], HttpResponse] = {
     def zioMarshaller(
-      implicit m1: Marshaller[MessageWithContent[A], HttpResponse],
-      m2:          Marshaller[Message, HttpResponse]
+      implicit m1: Marshaller[RichMessageSerializer[A], HttpResponse],
+      m2:          Marshaller[MessageSerializer, HttpResponse]
     ): Marshaller[Task[Option[A]], HttpResponse] =
       Marshaller { _: ExecutionContext => a: Task[Option[A]] =>
         {
@@ -28,14 +30,16 @@ object MarshallerWrap extends DefaultRuntime {
               Task.fromFuture(implicit ec => m2(ErrorMessage(operation)(e.toString)))
             }, {
               case Some(a) =>
-                val wrappedM = MessageWithContent(
+                val wrappedM = RichMessage(
                   operation = operation,
                   status = MessageStatus.Success,
                   fieldName = tableName
                 )(a)
                 Task.fromFuture(implicit ec => m1(wrappedM))
               case None =>
-                Task.fromFuture(implicit ec => m2(ErrorMessage(operation)(missingErrorMessage)))
+                Task.fromFuture(
+                  implicit ec => m2(ErrorMessage(operation)(missingErrorMessage))
+                )
             }
           )
 
@@ -49,11 +53,11 @@ object MarshallerWrap extends DefaultRuntime {
     zioMarshaller
   }
 
-  def message(): Marshaller[Message, HttpResponse] = {
+  def message(): Marshaller[MessageSerializer, HttpResponse] = {
     def marshaller(
-      implicit m2: Marshaller[Message, HttpResponse]
-    ): Marshaller[Message, HttpResponse] =
-      Marshaller { implicit ex: ExecutionContext => a: Message =>
+      implicit m2: Marshaller[MessageSerializer, HttpResponse]
+    ): Marshaller[MessageSerializer, HttpResponse] =
+      Marshaller { implicit ex: ExecutionContext => a: MessageSerializer =>
         m2(a)
       }
     marshaller
@@ -68,8 +72,8 @@ object MarshallerWrap extends DefaultRuntime {
   ): Marshaller[Task[Seq[A]], HttpResponse] = {
     case class Results(results: Seq[A])
     def zioMarshaller(
-      implicit m1: Marshaller[MessageWithContent[Results], HttpResponse],
-      m2:          Marshaller[Message, HttpResponse]
+      implicit m1: Marshaller[RichMessageSerializer[Results], HttpResponse],
+      m2:          Marshaller[MessageSerializer, HttpResponse]
     ): Marshaller[Task[Seq[A]], HttpResponse] =
       Marshaller { _: ExecutionContext => a: Task[Seq[A]] =>
         {
@@ -82,7 +86,7 @@ object MarshallerWrap extends DefaultRuntime {
                   case Results(r) => (r.map(rr => encoder.apply(rr)), r.length)
                 }
 
-              val wrappedM = MessageWithContent(
+              val wrappedM = RichMessage(
                 operation = operation,
                 status = MessageStatus.Success,
                 fieldName = tableName
@@ -110,8 +114,8 @@ object MarshallerWrap extends DefaultRuntime {
     implicit encoder: Encoder[A]
   ): Marshaller[Task[(A, Boolean)], HttpResponse] = {
     def zioMarshaller(
-      implicit m1: Marshaller[MessageWithContent[A], HttpResponse],
-      m2:          Marshaller[Message, HttpResponse]
+      implicit m1: Marshaller[RichMessageSerializer[A], HttpResponse],
+      m2:          Marshaller[MessageSerializer, HttpResponse]
     ): Marshaller[Task[(A, Boolean)], HttpResponse] =
       Marshaller { _: ExecutionContext => a: Task[(A, Boolean)] =>
         {
@@ -120,7 +124,7 @@ object MarshallerWrap extends DefaultRuntime {
               Task.fromFuture(implicit ec => m2(ErrorMessage(operation)(e.toString)))
             }, {
               case (item, true) =>
-                val wrappedM = MessageWithContent(
+                val wrappedM = RichMessage(
                   operation = operation,
                   status = MessageStatus.Success,
                   fieldName = s"$tableName-$fieldName"
@@ -151,8 +155,8 @@ object MarshallerWrap extends DefaultRuntime {
     implicit encoder: Encoder[A]
   ): Marshaller[Task[(Option[A], Boolean)], HttpResponse] = {
     def zioMarshaller(
-      implicit m1: Marshaller[MessageWithContent[A], HttpResponse],
-      m2:          Marshaller[Message, HttpResponse]
+      implicit m1: Marshaller[RichMessageSerializer[A], HttpResponse],
+      m2:          Marshaller[MessageSerializer, HttpResponse]
     ): Marshaller[Task[(Option[A], Boolean)], HttpResponse] =
       Marshaller { _: ExecutionContext => a: Task[(Option[A], Boolean)] =>
         {
@@ -160,8 +164,8 @@ object MarshallerWrap extends DefaultRuntime {
             (e: Throwable) => {
               Task.fromFuture(implicit ec => m2(ErrorMessage(operation)(e.toString)))
             }, {
-              case (Some(item), true) =>
-                val wrappedM = MessageWithContent(
+              case (Some(item: A), true) =>
+                val wrappedM = RichMessage(
                   operation = operation,
                   status = MessageStatus.Success,
                   fieldName = s"$tableName-$fieldName"

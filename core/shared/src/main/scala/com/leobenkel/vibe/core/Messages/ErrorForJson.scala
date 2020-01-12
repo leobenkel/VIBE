@@ -1,6 +1,4 @@
-package com.leobenkel.vibe.server.Messages
-
-import io.circe.Error
+package com.leobenkel.vibe.core.Messages
 
 import scala.util.Try
 
@@ -11,7 +9,7 @@ case class ErrorForJson(
 )
 
 object ErrorForJson {
-  def apply(e: Error): ErrorForJson = {
+  def apply(e: Throwable): ErrorForJson = {
     ErrorForJson(
       message = Try(e.getMessage).toOption.flatMap(Option(_)),
       messageCause = Try(e.getCause.getMessage).toOption.flatMap(Option(_)),

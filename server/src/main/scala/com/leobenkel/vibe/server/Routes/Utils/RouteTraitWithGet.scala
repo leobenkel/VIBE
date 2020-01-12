@@ -4,7 +4,7 @@ import akka.http.scaladsl.common.NameReceptacle
 import akka.http.scaladsl.model.{HttpMethod, HttpMethods}
 import akka.http.scaladsl.server.Directives.{complete, get, path, _}
 import akka.http.scaladsl.server.{Directive, Route}
-import com.leobenkel.vibe.server.Messages.Message
+import com.leobenkel.vibe.server.Messages.MessageSerializer
 
 private[Routes] trait RouteTraitWithGet[A] extends RouteTrait {
   lazy final override val method: HttpMethod = HttpMethods.GET
@@ -23,9 +23,9 @@ private[Routes] trait RouteTraitWithGet[A] extends RouteTrait {
 
   protected def methodGetParameters(): Seq[NameReceptacle[_]]
 
-  protected def methodGetOutput(methodGetParameters: A): Message
+  protected def methodGetOutput(methodGetParameters: A): MessageSerializer
 
-  protected def methodGetOutput(): Message = {
+  protected def methodGetOutput(): MessageSerializer = {
     errorWithContent[Seq[String]](
       errorMessage = "Missing GET parameters",
       contentFieldName = "missingGetParameters"

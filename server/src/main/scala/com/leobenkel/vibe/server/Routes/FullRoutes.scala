@@ -6,7 +6,7 @@ import akka.http.scaladsl.server.directives.DebuggingDirectives
 import akka.http.scaladsl.server.{Route, _}
 import com.leobenkel.vibe.core.Services.Database
 import com.leobenkel.vibe.server.Environment.{Config, LiveEnvironment}
-import com.leobenkel.vibe.server.Messages.ErrorMessage
+import com.leobenkel.vibe.server.Messages.ToMessage
 import com.leobenkel.vibe.server.Routes.Root.{HtmlRoute, ModelRootRoute}
 import com.leobenkel.vibe.server.Routes.Utils._
 import com.leobenkel.vibe.server.Schemas.ModelPickler
@@ -52,7 +52,7 @@ trait FullRoutes
             headers = Nil,
             entity = HttpEntity.apply(
               ContentTypes.`application/json`,
-              ErrorMessage(url)(s"Path '$url' not found!").toJsonString
+              ToMessage.ErrorMessage(url)(s"Path '$url' not found!").toJsonString
             )
           )
         }

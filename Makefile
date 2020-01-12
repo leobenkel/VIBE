@@ -1,4 +1,7 @@
 
+deep_clean:
+	rm -fr ./target ; rm -fr ./**/target
+
 start:
 	sbt "; client/debugDist ; ~server/reStart"
 

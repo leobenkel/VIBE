@@ -3,7 +3,8 @@ package com.leobenkel.vibe.server.Routes.Utils
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server.Route
-import com.leobenkel.vibe.server.Messages._
+import com.leobenkel.vibe.server.Messages.MessageSerializer
+import com.leobenkel.vibe.server.Messages.ToMessage.{ErrorMessage, RichErrorMessage}
 import io.circe.Encoder
 
 import scala.reflect.ClassTag
@@ -23,7 +24,7 @@ private[Routes] trait RouteTrait {
 
   def route: Route = path(url)(routeContent)
 
-  protected def error(errorMessage: String): Message =
+  protected def error(errorMessage: String): MessageSerializer =
     ErrorMessage(getFullUrl)(errorMessage)
 
   protected def getStatusCode: StatusCode = StatusCodes.OK
@@ -35,11 +36,11 @@ private[Routes] trait RouteTrait {
     content: => A
   )(
     implicit encoder: Encoder[A]
-  ): MessageWithContent[A] = {
-    ErrorMessage.withContent[A](getFullUrl)(errorMessage, contentFieldName)(content)
+  ): RichErrorMessage[A] = {
+    RichErrorMessage[A](getFullUrl, errorMessage, contentFieldName)(content)
   }
 
   protected def routeContent: Route = get(complete(getStatusCode, methodGetOutput().toJsonString))
 
-  protected def methodGetOutput(): Message
+  protected def methodGetOutput(): MessageSerializer
 }

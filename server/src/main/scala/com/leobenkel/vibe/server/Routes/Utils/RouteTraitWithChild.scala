@@ -3,7 +3,9 @@ package com.leobenkel.vibe.server.Routes.Utils
 import akka.http.scaladsl.model.{HttpMethod, HttpMethods}
 import akka.http.scaladsl.server.Directives.{pathEnd, pathPrefix, _}
 import akka.http.scaladsl.server.Route
-import com.leobenkel.vibe.server.Messages._
+import com.leobenkel.vibe.core.Messages.MessageStatus
+import com.leobenkel.vibe.server.Messages.MessageSerializer
+import com.leobenkel.vibe.server.Messages.ToMessage.RichMessage
 import com.leobenkel.vibe.server.Routes.Utils.RouteUtils.{RouteDescriptions, getRoutes}
 import io.circe.generic.auto._
 
@@ -22,8 +24,8 @@ private[Routes] trait RouteTraitWithChild extends RouteTrait {
 
   private[Routes] def getChildRoute: Seq[RouteTrait]
 
-  override protected def methodGetOutput(): Message = {
-    MessageWithContent[Seq[RouteDescriptions]](getFullUrl, MessageStatus.Success, "routes") {
+  override protected def methodGetOutput(): MessageSerializer = {
+    RichMessage[Seq[RouteDescriptions]](getFullUrl, MessageStatus.Success, "routes") {
       getRoutes(getChildRoute)
     }
   }
