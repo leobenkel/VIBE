@@ -3,9 +3,13 @@ package com.leobenkel.vibe.client.routes
 import java.time.LocalDate
 
 import com.leobenkel.vibe.client.components.AbstractComponent
-import com.leobenkel.vibe.client.pages.MainPage
+import com.leobenkel.vibe.client.pages.ListPageForTable
+import com.leobenkel.vibe.client.util.ModelPickler._
+import com.leobenkel.vibe.core.Schemas.Tag
+import japgolly.scalajs.react.CtorType.ChildArg
 import japgolly.scalajs.react.extra.router.StaticDsl.RouteB
 import japgolly.scalajs.react.extra.router._
+import japgolly.scalajs.react.raw.React
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{Callback, ReactMouseEventFrom}
 import org.scalajs.dom.html.Div
@@ -89,7 +93,24 @@ object AppRouter extends AbstractComponent {
     )
 
     (trimSlashes
-      | staticRoute("mainPage", MainPageData) ~> renderR(ctrl => MainPage()))
+      | staticRoute("mainPage", MainPageData) ~> renderR(
+        (_: RouterCtl[AppPageData]) =>
+          new ListPageForTable[Tag]() {
+            lazy final override protected val getHeaderColumns: Seq[Symbol] = Seq(
+              'id, 'name, 'isVisible
+            )
+
+            override protected def getTableValues(obj: Tag): Seq[ChildArg] = {
+              Seq(
+                obj.id,
+                obj.name,
+                obj.isVisible
+              ).map(VdomNode.cast)
+            }
+
+            lazy final override protected val reader: upickle.default.Reader[Seq[Tag]] = implicitly
+          }
+      ))
       .notFound(redirectToPage(MainPageData)(Redirect.Replace))
       .renderWith(layout)
   }
