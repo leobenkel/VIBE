@@ -21,18 +21,27 @@ object ToMessage {
     lazy final override val classTagA:  ClassTag[A] = implicitly
   }
 
+  case class Url(url: String) {
+    override def toString: String = s"'$url'"
+  }
+
+  object Url {
+    def apply(r: RequestContext): Url = Url(r.request._2.path.toString)
+  }
+
   def makeError(
     statusCodes: StatusCode,
-    message:     String,
-    url:         RequestContext => String = _.request._2.path.toString
+    message:     Url => String,
+    url:         RequestContext => Url = Url(_)
   ): Route = { request: RequestContext =>
     request.complete {
+      val urlComputed = url(request)
       HttpResponse.apply(
         status = statusCodes,
         headers = Nil,
         entity = HttpEntity.apply(
           ContentTypes.`application/json`,
-          ToMessage.ErrorMessage(url(request))(message).toJsonString
+          ToMessage.ErrorMessage(urlComputed.url)(message(urlComputed)).toJsonString
         )
       )
     }

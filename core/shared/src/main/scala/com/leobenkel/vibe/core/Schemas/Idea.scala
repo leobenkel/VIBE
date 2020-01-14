@@ -81,7 +81,11 @@ case class Idea(
 }
 
 object Idea extends TableRef[ID, Idea] {
-  override def getTableName: TABLE_NAME = "ideas"
+  override final def getTableName: TABLE_NAME = "ideas"
+
+ override final def getHeaderColumns: Array[Symbol] = ???
+
+  override final def getTableValues(obj: Idea): Array[Any] = ???
 
   def apply(
     title:       String,

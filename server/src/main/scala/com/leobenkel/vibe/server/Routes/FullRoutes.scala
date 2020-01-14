@@ -46,14 +46,14 @@ trait FullRoutes
     RejectionHandler
       .newBuilder().handleNotFound {
         ToMessage.makeError(
-          url = _.unmatchedPath.toString,
+          url = r => ToMessage.Url(r.unmatchedPath.toString),
           statusCodes = StatusCodes.NotFound,
-          message = s"Path '$url' not found!"
+          message = url => s"Path $url not found!"
         )
       }
       .result()
 
-  override val route: Route = DebuggingDirectives.logRequest("Request") {
+  lazy final override val route: Route = DebuggingDirectives.logRequest("Request") {
     handleRejections(rejectionHandler) {
       ignoreTrailingSlash(getChildRoute.map(_.route).reduce(_ ~ _))
     }

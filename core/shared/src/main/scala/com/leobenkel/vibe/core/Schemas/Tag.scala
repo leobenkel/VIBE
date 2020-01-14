@@ -24,7 +24,7 @@ case class Tag(
 }
 
 object Tag extends TableRef[ID, Tag] {
-  override def getTableName: TABLE_NAME = "tags"
+  final override def getTableName: TABLE_NAME = "tags"
 
   def apply(
     name:    String,
@@ -42,4 +42,18 @@ object Tag extends TableRef[ID, Tag] {
     }
 
   override def idFromString(s: String): Comment.PK = SchemaTypes.idFromString(s)
+
+  final override def getHeaderColumns: Array[Symbol] = Array(
+    'id, 'name, 'isVisible, 'creationDate, 'updateDate
+  )
+
+  override def getTableValues(obj: Tag): Array[Any] = {
+    Array(
+      obj.id,
+      obj.name,
+      obj.isVisible,
+      obj.creationTimestamp,
+      obj.updateTimestamp
+    )
+  }
 }

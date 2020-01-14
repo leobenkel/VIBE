@@ -5,7 +5,8 @@ import akka.http.scaladsl.model.HttpResponse
 import com.leobenkel.vibe.core.Messages._
 import com.leobenkel.vibe.server.Messages.ToMessage._
 import com.leobenkel.vibe.server.Messages.{MessageSerializer, RichMessageSerializer}
-import io.circe.{Encoder, Json}
+import io.circe.Encoder
+import io.circe.generic.auto._
 import zio._
 
 import scala.concurrent.ExecutionContext
@@ -70,9 +71,9 @@ object MarshallerWrap extends DefaultRuntime {
   )(
     implicit encoder: Encoder[A]
   ): Marshaller[Task[Seq[A]], HttpResponse] = {
-    case class Results(results: Seq[A])
+//    case class Results(results: Seq[A])
     def zioMarshaller(
-      implicit m1: Marshaller[RichMessageSerializer[Results], HttpResponse],
+      implicit m1: Marshaller[RichMessageSerializer[ContentS[A]], HttpResponse],
       m2:          Marshaller[MessageSerializer, HttpResponse]
     ): Marshaller[Task[Seq[A]], HttpResponse] =
       Marshaller { _: ExecutionContext => a: Task[Seq[A]] =>
@@ -81,16 +82,11 @@ object MarshallerWrap extends DefaultRuntime {
             (e: Throwable) => {
               Task.fromFuture(implicit ec => m2(ErrorMessage(operation)(e.toString)))
             }, { r =>
-              implicit val encoderR: Encoder[Results] =
-                Encoder.forProduct2[Results, Seq[Json], Int]("items", "length") {
-                  case Results(r) => (r.map(rr => encoder.apply(rr)), r.length)
-                }
-
               val wrappedM = RichMessage(
                 operation = operation,
                 status = MessageStatus.Success,
                 fieldName = tableName
-              )(Results(r))
+              )(ContentS(r.toSeq, r.length))
               Task.fromFuture(implicit ec => m1(wrappedM))
             }
           )

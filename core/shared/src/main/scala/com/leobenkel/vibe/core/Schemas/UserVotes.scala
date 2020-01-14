@@ -59,7 +59,11 @@ case class UserVotes(
 }
 
 object UserVotes extends TableRef[(User.PK, Votable.FOREIGN_ID, Votable.FOREIGN_TABLE), UserVotes] {
-  override def getTableName: TABLE_NAME = "user_votes"
+  final override def getTableName: TABLE_NAME = "user_votes"
+
+  final override def getHeaderColumns: Array[Symbol] = ???
+
+  final override def getTableValues(obj: UserVotes): Array[Any] = ???
 
   def makePk(
     user:    User,

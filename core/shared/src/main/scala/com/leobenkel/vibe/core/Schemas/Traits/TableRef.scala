@@ -18,6 +18,10 @@ trait TableRef[PRIMARY_KEY, ROW_TYPE <: SchemaBase[PRIMARY_KEY]] {
 
   def idFromString(s: String): PK
 
+  def getHeaderColumns: Array[Symbol]
+
+  def getTableValues(obj: ROW_TYPE): Array[Any]
+
   final def getId(row: ROW_TYPE): PK = row.id
 
   final def makeQueryOne(id: PK): QueryOne[PRIMARY_KEY, ROW_TYPE] =

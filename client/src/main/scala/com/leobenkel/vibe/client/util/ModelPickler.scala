@@ -1,5 +1,6 @@
 package com.leobenkel.vibe.client.util
 
+import com.leobenkel.vibe.core.Messages._
 import com.leobenkel.vibe.core.Schemas._
 import upickle.default.{macroRW, ReadWriter => RW}
 
@@ -15,4 +16,25 @@ object ModelPickler {
   implicit val TagRW:       RW[Tag] = macroRW
   implicit val UserRW:      RW[User] = macroRW
   implicit val UserVotesRW: RW[UserVotes] = macroRW
+
+//  implicit def contentSerializedRW[A](
+//    implicit r: upickle.default.Reader[A],
+//    w:          upickle.default.Writer[A]
+//  ): RW[ContentSerialized[A]] = macroRW
+
+//  implicit val CommentContent:   RW[ContentSerialized[Comment]] = macroRW
+//  implicit val IdeaContent:      RW[ContentSerialized[Idea]] = macroRW
+//  implicit val SkillContent:     RW[ContentSerialized[Skill]] = macroRW
+//  implicit val TagContent:       RW[ContentSerialized[Tag]] = macroRW
+//  implicit val UserContent:      RW[ContentSerialized[User]] = macroRW
+//  implicit val UserVotesContent: RW[ContentSerialized[UserVotes]] = macroRW
+
+  implicit val SimpleMessageRW: RW[SimpleMessage] = macroRW
+
+//  implicit def messageWithContentForJsonRW[A](
+//    implicit r: upickle.default.Reader[A],
+//    w:          upickle.default.Writer[A]
+//  ): RW[MessageWithContentForJson[A]] = macroRW
+
+//  implicit val MessageWithContent: RW[MessageWithContent[_]] = macroRW
 }

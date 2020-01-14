@@ -36,19 +36,20 @@ trait RoutePutSchema[PK, ROW <: SchemaT[PK, ROW], INPUT] extends RouteTrait {
       case missing: MissingFormFieldRejection =>
         ToMessage.makeError(
           statusCodes = StatusCodes.NotAcceptable,
-          message = s"Form is missing field: '${missing.fieldName}'"
+          message = _ => s"Form is missing field: '${missing.fieldName}'"
         )
       case malformed: MalformedFormFieldRejection =>
         ToMessage.makeError(
           statusCodes = StatusCodes.NotAcceptable,
-          message = s"Form is malformed for field: '${malformed.fieldName}': " +
-            s"${malformed.errorMsg}"
+          message = _ =>
+            s"Form is malformed for field: '${malformed.fieldName}': " +
+              s"${malformed.errorMsg}"
         )
     }
     .handleAll { errors: Seq[Rejection] =>
       ToMessage.makeError(
         statusCodes = StatusCodes.NotAcceptable,
-        message = errors.map(_.toString).mkString(", ")
+        message = _ => errors.map(_.toString).mkString(", ")
       )
     }
     .result()

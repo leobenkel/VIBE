@@ -4,12 +4,13 @@ import java.time.LocalDate
 
 import com.leobenkel.vibe.client.components.AbstractComponent
 import com.leobenkel.vibe.client.pages.ListPageForTable
-import com.leobenkel.vibe.client.util.ModelPickler._
+import com.leobenkel.vibe.core.Schemas
 import com.leobenkel.vibe.core.Schemas.Tag
-import japgolly.scalajs.react.CtorType.ChildArg
+import com.leobenkel.vibe.core.Schemas.Traits.TableRef
+import io.circe.Decoder.Result
+import io.circe.{Decoder, HCursor}
 import japgolly.scalajs.react.extra.router.StaticDsl.RouteB
 import japgolly.scalajs.react.extra.router._
-import japgolly.scalajs.react.raw.React
 import japgolly.scalajs.react.vdom.html_<^._
 import japgolly.scalajs.react.{Callback, ReactMouseEventFrom}
 import org.scalajs.dom.html.Div
@@ -95,21 +96,36 @@ object AppRouter extends AbstractComponent {
     (trimSlashes
       | staticRoute("mainPage", MainPageData) ~> renderR(
         (_: RouterCtl[AppPageData]) =>
-          new ListPageForTable[Tag]() {
-            lazy final override protected val getHeaderColumns: Seq[Symbol] = Seq(
-              'id, 'name, 'isVisible
-            )
+          new ListPageForTable[Tag.PK, Tag]() {
+            lazy final override protected val getTableRef: TableRef[Schemas.Tag.PK, Tag] = Tag
+//            implicit lazy final override protected val reader:  RW[ReturnType] = macroRW
+//            implicit lazy final override protected val readerC: RW[ContentS[Tag]] = macroRW
+//            implicit lazy final override protected val readerL: RW[Array[Tag]] = implicitly
+//            implicit lazy final override protected val readerT: RW[Tag] = macroRW
 
-            override protected def getTableValues(obj: Tag): Seq[ChildArg] = {
-              Seq(
-                obj.id,
-                obj.name,
-                obj.isVisible
-              ).map(VdomNode.cast)
-            }
+            implicit lazy final override val decoderT: Decoder[DecodingType] =
+              new Decoder[DecodingType] {
 
-            lazy final override protected val reader: upickle.default.Reader[Seq[Tag]] = implicitly
-          }
+                override def apply(c: HCursor): Result[DecodingType] = {
+                  for {
+                    id                <- c.downField("id").as[Tag.PK]
+                    creationTimestamp <- c.downField("creationTimestamp").as[Long]
+                    updateTimestamp   <- c.downField("updateTimestamp").as[Long]
+                    name              <- c.downField("name").as[String]
+                    isVisible         <- c.downField("isVisible").as[Boolean]
+                  } yield {
+                    Tag(
+                      id = id,
+                      creationTimestamp = creationTimestamp,
+                      updateTimestamp = updateTimestamp,
+                      name = name,
+                      isVisible = isVisible
+                    )
+                  }
+                }
+              }
+//            implicit lazy final override val classTagT: ClassTag[Tag] = implicitly
+          }.apply()
       ))
       .notFound(redirectToPage(MainPageData)(Redirect.Replace))
       .renderWith(layout)
