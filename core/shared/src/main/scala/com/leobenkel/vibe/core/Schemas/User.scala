@@ -40,11 +40,21 @@ case class User(
 object User extends TableRef[ID, User] {
   type OAuth = String
 
-  override final def getTableName: TABLE_NAME = "users"
+  final override def getTableName: TABLE_NAME = "users"
 
- override final def getHeaderColumns: Array[Symbol] = ???
+  final override def getHeaderColumns: Array[Symbol] = Array(
+    'id, 'name, 'email, 'oauthToken, 'skills, 'creationTimestamp, 'updateTimestamp
+  )
 
-  override final def getTableValues(obj: User): Array[Any] = ???
+  final override def getTableValues(obj: User): Array[Any] = Array(
+    obj.id,
+    obj.name,
+    obj.email,
+    obj.oauthToken,
+    obj.skills,
+    obj.creationTimestamp,
+    obj.updateTimestamp
+  )
 
   def apply(
     name:       String,

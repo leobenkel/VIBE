@@ -24,11 +24,21 @@ case class Skill(
 }
 
 object Skill extends TableRef[ID, Skill] {
-  override final def getTableName: TABLE_NAME = "skills"
+  final override def getTableName: TABLE_NAME = "skills"
 
- override final def getHeaderColumns: Array[Symbol] = ???
+  final override def getHeaderColumns: Array[Symbol] = Array(
+    'id, 'name, 'isVisible, 'creationDate, 'updateDate
+  )
 
-  override final def getTableValues(obj: Skill): Array[Any] = ???
+  override def getTableValues(obj: Skill): Array[Any] = {
+    Array(
+      obj.id,
+      obj.name,
+      obj.isVisible,
+      obj.creationTimestamp,
+      obj.updateTimestamp
+    )
+  }
 
   def apply(
     name:      String,

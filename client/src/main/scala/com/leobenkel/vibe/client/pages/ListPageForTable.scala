@@ -1,10 +1,9 @@
 package com.leobenkel.vibe.client.pages
 
-import java.time._
-import java.time.format.DateTimeFormatter
-
 import com.leobenkel.vibe.client.app.Config
 import com.leobenkel.vibe.client.components.AbstractComponent
+import com.leobenkel.vibe.client.routes.AppRouter.AppPageData
+import com.leobenkel.vibe.client.util.{ErrorProtection, Log}
 import com.leobenkel.vibe.core.Messages.{ContentS, MessageWithContentForJson}
 import com.leobenkel.vibe.core.Schemas.Traits.{SchemaBase, TableRef}
 import com.leobenkel.vibe.core.Utils.SchemaTypes.TABLE_NAME
@@ -20,6 +19,7 @@ import typingsJapgolly.semanticDashUiDashReact.components._
 import typingsJapgolly.semanticDashUiDashReact.distCommonjsElementsButtonButtonMod.ButtonProps
 import ujson.Value.InvalidData
 
+import scala.scalajs.js
 import scala.util.{Failure, Success, Try}
 
 /**
@@ -33,25 +33,26 @@ trait ListPageForTable[PK, T <: SchemaBase[PK]] extends AbstractComponent {
     errors:  Option[String] = None
   )
 
+  case object PageData extends AppPageData
+
   protected type ReturnType = MessageWithContentForJson[ContentS[T]]
 
   protected def getTableRef: TableRef[PK, T]
-  lazy final protected val getHeaderColumns: Array[Symbol] = getTableRef.getHeaderColumns
-  final protected def getTableValues(obj: T): Array[ChildArg] =
+
+  lazy final val name: TABLE_NAME = getTableRef.getTableName
+
+  lazy final protected val getHeaderColumns: Array[Symbol] =
+    ErrorProtection(getTableRef.getHeaderColumns)
+
+  final protected def getTableValues(obj: T): Array[ChildArg] = ErrorProtection {
     getTableRef.getTableValues(obj).map {
       case a: Long =>
         Try {
-          println(s"cast date")
-          //        val df:   SimpleDateFormat = new SimpleDateFormat("yyyy-MM-dd")
-          //        val date: String = df.format(a)
-          val format = DateTimeFormatter
-            .ofPattern("YYYY MM dd HH:mm (Z)", java.util.Locale.getDefault)
-          val clock = Clock.fixed(Instant.ofEpochSecond(a), ZoneOffset.ofHours(0))
-
-          println(s"done case date")
-          format.format(clock.instant())
+          // TODO: Improve the display of dates here.
+          val date = new js.Date(a.toDouble)
+          s"${date.toLocaleDateString()} ${date.toLocaleTimeString()}"
         } match {
-          case Success(value)     => VdomNode.cast(value)
+          case Success(value) => VdomNode.cast(value)
           case Failure(exception) =>
             exception.printStackTrace()
             VdomNode.cast(s"Failed: ${exception.toString}")
@@ -59,6 +60,7 @@ trait ListPageForTable[PK, T <: SchemaBase[PK]] extends AbstractComponent {
       case a: Boolean => VdomNode.cast(a.toString)
       case a => VdomNode.cast(a)
     }
+  }
 
   lazy private val tableName: TABLE_NAME = getTableRef.getTableName
 
@@ -89,46 +91,47 @@ trait ListPageForTable[PK, T <: SchemaBase[PK]] extends AbstractComponent {
 
   type DecodingType = T
   protected def decoderT: Decoder[DecodingType]
-//  implicit def classTagT: ClassTag[T]
 
-  lazy private val decoderContent: Decoder[ContentS[T]] = (c: HCursor) => {
-    println(s"Content: ${c.keys}")
-    for {
-      length <- c.downField("length").as[Int]
-      _ = println(s"Length: $length")
-      itemsJ <- c.downField("items").as[Seq[Json]]
-      _ = println(s"i: $itemsJ")
-      items = itemsJ.map(_.as[T](decoderT).right.get)
-    } yield {
-      println(s"Items: $items")
-      ContentS(items = items, length = length)
+  lazy private val decoderContent: Decoder[ContentS[T]] = (c: HCursor) =>
+    ErrorProtection {
+      Log.debug(s"Content: ${c.keys}")
+      for {
+        length <- c.downField("length").as[Int]
+        _ = Log.debug(s"Length: $length")
+        itemsJ <- c.downField("items").as[Seq[Json]]
+        _ = Log.debug(s"i: $itemsJ")
+        items = itemsJ.map(_.as[T](decoderT).right.get)
+      } yield {
+        Log.debug(s"Items: $items")
+        ContentS(items = items, length = length)
+      }
     }
-  }
 
-  lazy private val decoderMessage: Decoder[ReturnType] = (c: HCursor) => {
-    println(s"MessageKeys: ${c.keys}")
-    for {
-      operation    <- c.downField("operation").as[String]
-      success      <- c.downField("success").as[Boolean]
-      errorMessage <- c.downField("errorMessage").as[Option[String]]
-      items        <- c.downField(tableName).as[ContentS[T]](decoderContent)
-    } yield {
-      MessageWithContentForJson(
-        operation = operation,
-        success = success,
-        errorMessage = errorMessage,
-        content = items
-      )
+  lazy private val decoderMessage: Decoder[ReturnType] = (c: HCursor) =>
+    ErrorProtection {
+      Log.debug(s"MessageKeys: ${c.keys}")
+      for {
+        operation    <- c.downField("operation").as[String]
+        success      <- c.downField("success").as[Boolean]
+        errorMessage <- c.downField("errorMessage").as[Option[String]]
+        items        <- c.downField(tableName).as[ContentS[T]](decoderContent)
+      } yield {
+        MessageWithContentForJson(
+          operation = operation,
+          success = success,
+          errorMessage = errorMessage,
+          content = items
+        )
+      }
     }
-  }
 
   class Backend($ : BackendScope[_, State]) {
     def init(state:    State): Callback = Callback.empty
-    def refresh(state: State): Callback = {
+    def refresh(state: State): Callback = ErrorProtection {
       getHostUrl
         .flatMap {
           case Left(error) =>
-            println(s"Error: $error")
+            Log.error(s"Error: $error")
             AsyncCallback.apply[CallbackTo[Unit]](_ => $.modState(_.copy(errors = Some(error))))
           case Right(host) =>
             Ajax
@@ -138,9 +141,9 @@ trait ListPageForTable[PK, T <: SchemaBase[PK]] extends AbstractComponent {
               .asAsyncCallback
               .map { xhr =>
                 try {
-                  println(s"Raw: ${xhr.responseText}")
+                  Log.debug(s"Raw: ${xhr.responseText}")
                   val output = io.circe.parser.decode[ReturnType](xhr.responseText)(decoderMessage)
-                  println(s"Output: $output")
+                  Log.debug(s"Output: $output")
                   $.modState(_.copy(objects = output.right.get.content.items))
                 } catch {
                   case e: InvalidData =>
@@ -155,12 +158,13 @@ trait ListPageForTable[PK, T <: SchemaBase[PK]] extends AbstractComponent {
       event: ReactMouseEventFrom[HTMLButtonElement],
       data:  ButtonProps
     ): Callback =
+      // TODO: Redirect to insert form
       Callback.alert(
         "Clicked on 'Add New object'... did you expect something else? hey, " +
           "I can't write everything for you!"
       )
 
-    def render(state: State): VdomElement =
+    def render(state: State): VdomElement = ErrorProtection {
       appContext.consume { _ =>
         <.div(
           Table()(
@@ -185,14 +189,21 @@ trait ListPageForTable[PK, T <: SchemaBase[PK]] extends AbstractComponent {
           Button(onClick = onAddNewObject)("Add new object")
         )
       }
+    }
   }
 
-  lazy private val component: Component[Unit, State, Backend, CtorType.Nullary] = ScalaComponent
-    .builder[Unit]("MainPage")
-    .initialState(State())
-    .renderBackend[Backend]
-    .componentDidMount($ => $.backend.init($.state) >> $.backend.refresh($.state))
-    .build
+  lazy private val component: Component[Unit, State, Backend, CtorType.Nullary] = ErrorProtection {
+    ScalaComponent
+      .builder[Unit](name)
+      .initialState(State())
+      .renderBackend[Backend]
+      .componentDidMount($ => $.backend.init($.state) >> $.backend.refresh($.state))
+      .build
+  }
 
-  final def apply(): Unmounted[Unit, State, Backend] = component()
+  final def apply(): Unmounted[Unit, State, Backend] = ErrorProtection(component())
+}
+
+object ListPageForTable {
+  type SchemaAllPage[A] = ListPageForTable[A, SchemaBase[A]]
 }
