@@ -1,8 +1,9 @@
 package com.leobenkel.vibe.client.routes
 
 import com.leobenkel.vibe.client.components.AbstractComponent
-import com.leobenkel.vibe.client.pages.ListPageForTable
-import com.leobenkel.vibe.client.pages.ListPageForTable.SchemaAllPage
+import com.leobenkel.vibe.client.routes.Framework.RouteTrait
+import com.leobenkel.vibe.client.routes.pages.ListPageForTable
+import com.leobenkel.vibe.client.routes.pages.ListPageForTable.SchemaAllPage
 import com.leobenkel.vibe.client.util.{ErrorProtection, Log}
 import com.leobenkel.vibe.core.Schemas.Traits.TableRef
 import com.leobenkel.vibe.core.Schemas._
@@ -68,7 +69,7 @@ object AppRouter extends AbstractComponent {
     )
   }
 
-  private val AllSchemas: Seq[SchemaAllPage[_]] = Seq(
+  private val AllSchemas: Seq[RouteTrait] = Seq(
     new ListPageForTable[Tag.PK, Tag]() {
       lazy final override protected val getTableRef: TableRef[Tag.PK, Tag] = Tag
 
@@ -166,14 +167,13 @@ object AppRouter extends AbstractComponent {
 //        s"(${tuple._1.toString},${tuple._2.toString})"
 //      }
 //    )
+
     ErrorProtection {
       AllSchemas
         .foldLeft[Rule](trimSlashes) {
           case (acc: Rule, schema) =>
             Log.info(s"Set up route for ${schema.name}")
-            acc | staticRoute(schema.name, schema.PageData) ~> renderR(
-              (_: RouterCtl[AppPageData]) => schema.apply()
-            )
+            acc | schema.route(dsl)
         }
         .notFound(redirectToPage {
           // TODO: replace with 404 page here

@@ -8,8 +8,8 @@ import zio.console.Console
 
 trait Operation[OUTPUT] {
   final def act: QueryZIO[OUTPUT] = Database.runQuery[OUTPUT](this)
-  def name:                    String
-  def tableName:               TABLE_NAME
+  def name:                              String
+  def tableName:                         TABLE_NAME
   protected def displayExtraInformation: String
 
   final def display: ZIO[Any with Console, Throwable, this.type] = {

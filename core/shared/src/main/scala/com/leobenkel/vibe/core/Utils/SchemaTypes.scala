@@ -12,5 +12,5 @@ object SchemaTypes {
   type TABLE_NAME = String
   type QueryZIO[A] = ZIO[Any with Database with Console, Throwable, A]
 
-  def idFromString(s: String): ID = s//.toLong
+  def idFromString(s: String): ID = s //.toLong
 }

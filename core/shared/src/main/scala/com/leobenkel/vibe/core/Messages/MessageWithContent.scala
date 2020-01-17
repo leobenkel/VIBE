@@ -1,8 +1,6 @@
 package com.leobenkel.vibe.core.Messages
 
 import scala.reflect.ClassTag
-import scala.reflect.runtime.universe
-import scala.reflect.runtime.universe.TypeTag
 
 trait MessageWithContent[A] extends Message {
   implicit def classTagA: ClassTag[A]

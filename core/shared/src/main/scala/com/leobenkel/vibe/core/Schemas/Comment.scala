@@ -42,13 +42,13 @@ case class Comment(
 }
 
 object Comment extends TableRef[ID, Comment] {
-  override final def getTableName: TABLE_NAME = "comments"
+  final override def getTableName: TABLE_NAME = "comments"
 
-  override final def getHeaderColumns: Array[Symbol] =
+  final override def getHeaderColumns: Array[Symbol] =
     Array('id, 'authorId, 'content, 'attachedToTable, 'attachedToId, 'commentIds,
       'creationTimestamp, 'updateTimestamp)
 
-  override final def getTableValues(obj: Comment): Array[Any] = Array(
+  final override def getTableValues(obj: Comment): Array[Any] = Array(
     obj.id,
     obj.authorId,
     obj.content,

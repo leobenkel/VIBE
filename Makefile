@@ -10,3 +10,6 @@ build_front:
 
 build_front_prod:
 	sbt client/dist
+
+fmt:
+	sbt scalafmt

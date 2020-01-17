@@ -6,6 +6,6 @@ case class Insert[A <: SchemaBase[_]](
   tableName: TABLE_NAME,
   row:       A
 ) extends OperationNoReturn {
-  lazy final override val name:                    String = "INSERT"
-  protected lazy final override val displayExtraInformation: String = s"R:${row.toString}"
+  lazy final override val name:                              String = "INSERT"
+  lazy final override protected val displayExtraInformation: String = s"R:${row.toString}"
 }

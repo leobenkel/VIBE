@@ -1,7 +1,5 @@
 package com.leobenkel.vibe.client.util
 
-import com.leobenkel.vibe.client.app.Config
-
 object Log {
   // TODO: hook that somewhere in the deployment, or application.json configuration
   val WithDebug: Boolean = false

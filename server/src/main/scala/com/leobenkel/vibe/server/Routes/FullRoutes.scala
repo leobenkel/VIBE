@@ -1,6 +1,5 @@
 package com.leobenkel.vibe.server.Routes
 
-import akka.event.{Logging, LoggingAdapter}
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.directives.DebuggingDirectives
 import akka.http.scaladsl.server.{Route, _}
@@ -29,7 +28,7 @@ trait FullRoutes
   def config: Config.Service
 //  private val runtime: DefaultRuntime = new DefaultRuntime() {}
   protected def env: Any with Database with Console with Clock with Random
-  private val self:             FullRoutes = this
+  private val self: FullRoutes = this
 //  private val log:              LoggingAdapter = Logging.getLogger(actor.actorSystem, this)
   private val staticContentDir: String = config.getLocalString("staticContentDir")
 
