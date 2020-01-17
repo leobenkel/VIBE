@@ -30,7 +30,7 @@ trait FullRoutes
 //  private val runtime: DefaultRuntime = new DefaultRuntime() {}
   protected def env: Any with Database with Console with Clock with Random
   private val self:             FullRoutes = this
-  private val log:              LoggingAdapter = Logging.getLogger(actor.actorSystem, this)
+//  private val log:              LoggingAdapter = Logging.getLogger(actor.actorSystem, this)
   private val staticContentDir: String = config.getLocalString("staticContentDir")
 
   override private[Routes] val getChildRoute: Seq[RouteTrait] = Seq(

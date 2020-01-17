@@ -26,8 +26,8 @@ object Config {
       .asAsyncCallback
       .map { xhr =>
         io.circe.parser
-          .parse(xhr.responseText).left
-          .map(_.toString)
+          .parse(xhr.responseText)
+          .left.map(_.toString)
           .flatMap(get(_, ConfigKey))
           .flatMap(get(_, key))
       }

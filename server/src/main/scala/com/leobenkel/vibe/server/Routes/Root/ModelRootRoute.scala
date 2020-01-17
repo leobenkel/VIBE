@@ -1,5 +1,6 @@
 package com.leobenkel.vibe.server.Routes.Root
 
+import akka.http.scaladsl.model.Uri
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
 import com.leobenkel.vibe.core.Messages.MessageStatus
@@ -148,7 +149,7 @@ trait ModelRootRoute extends RouteTraitWithChild {
     }
   )
 
-  lazy final override val url: String = "api"
+  lazy final override val url: String = ApiRoute.URL
 
   override def methodGetOutput(): MessageSerializer = {
     ToMessage.RichMessage[Seq[RouteDescriptions]](
@@ -158,5 +159,13 @@ trait ModelRootRoute extends RouteTraitWithChild {
     ) {
       getRoutes(getChildRoute)
     }
+  }
+}
+
+object ApiRoute {
+  val URL: String = "api"
+
+  def isApiUrl(path: Uri.Path): Boolean = {
+    path.startsWith(Uri.Path./(ApiRoute.URL))
   }
 }
