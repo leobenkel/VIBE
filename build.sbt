@@ -16,8 +16,8 @@ lazy val slickVersion = "3.3.2"
 lazy val zioVersion = "1.0.0-RC17"
 
 // TODO: to remove:
-offline       := true
-updateOptions := updateOptions.value.withCachedResolution(true)
+//offline       := true
+//updateOptions := updateOptions.value.withCachedResolution(true)
 ////
 
 lazy val basicSettings = Seq(
@@ -80,11 +80,12 @@ lazy val core = crossProject(JSPlatform, JVMPlatform)
     basicSettings,
     commonSettings,
     libraryDependencies ++= Seq(
-      "dev.zio" %% "zio" % zioVersion withSources
+      "dev.zio" %% "zio" % zioVersion withSources,
+      "org.scala-lang" % "scala-reflect" % scalaVersion.value
     )
   )
   .jvmSettings(
-    libraryDependencies += "org.scala-js" %% "scalajs-stubs" % "0.6.31" % Provided
+    libraryDependencies ++= Seq("org.scala-js" %% "scalajs-stubs" % "0.6.31" % Provided)
   )
   .jsSettings()
 
@@ -128,7 +129,9 @@ lazy val dist = TaskKey[File]("dist")
 
 lazy val debugDist = TaskKey[File]("debugDist")
 
-lazy val client = (project in file("client"))
+lazy val clientFolderName = "client"
+lazy val client = project
+  .in(file(clientFolderName))
   .enablePlugins(
     ScalaJSPlugin,
     ScalajsReactTypedPlugin,
@@ -141,11 +144,11 @@ lazy val client = (project in file("client"))
     basicSettings,
     circeDependenciesJS,
     debugDist := {
-      val assets = (ThisBuild / baseDirectory).value / "client" / "src" / "main" / "web"
+      val assets = (ThisBuild / baseDirectory).value / clientFolderName / "src" / "main" / "web"
 
       val artifacts = (Compile / fastOptJS / webpack).value
       val artifactFolder = (Compile / fastOptJS / crossTarget).value
-      val distFolder = (ThisBuild / baseDirectory).value / "dist"
+      val distFolder = (ThisBuild / baseDirectory).value / "target" / "dist"
 
       distFolder.mkdirs()
       FileUtils.copyDirectory(assets, distFolder, true)
@@ -162,11 +165,11 @@ lazy val client = (project in file("client"))
       distFolder
     },
     dist := {
-      val assets = (ThisBuild / baseDirectory).value / "client" / "src" / "main" / "web"
+      val assets = (ThisBuild / baseDirectory).value / clientFolderName / "src" / "main" / "web"
 
       val artifacts = (Compile / fullOptJS / webpack).value
       val artifactFolder = (Compile / fullOptJS / crossTarget).value
-      val distFolder = (ThisBuild / baseDirectory).value / "dist"
+      val distFolder = (ThisBuild / baseDirectory).value / "target" / "dist"
 
       distFolder.mkdirs()
       FileUtils.copyDirectory(assets, distFolder, true)
@@ -205,7 +208,8 @@ lazy val client = (project in file("client"))
       "com.github.japgolly.scalacss" %%% "ext-react"  % "0.6.0-RC1" withSources,
       "com.lihaoyi"                                   %% "upickle" % "0.8.0" % Test withSources,
       "com.github.pathikrit" %% "better-files" % "3.8.0",
-      "org.scalatest" %% "scalatest" % "3.1.0" % Test withSources
+      "org.scalatest"                           %% "scalatest" % "3.1.0" % Test withSources,
+      "io.github.cquiroz" %%% "scala-java-time" % "2.0.0-RC3" withSources
     ),
     scalacOptions ++= Seq(
       "-P:scalajs:sjsDefinedByDefault",

@@ -1,6 +1,7 @@
 {
   "vibe": {
     "host": "localhost",
-    "port": 8079
+    "port": 8079,
+    "debugLogOn": true
   }
 }

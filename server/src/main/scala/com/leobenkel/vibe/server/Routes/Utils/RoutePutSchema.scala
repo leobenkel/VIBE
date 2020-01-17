@@ -4,12 +4,11 @@ import akka.http.scaladsl.marshalling.Marshaller
 import akka.http.scaladsl.model._
 import akka.http.scaladsl.server.Directives._
 import akka.http.scaladsl.server._
-import com.leobenkel.vibe.core.Messages.Message
 import com.leobenkel.vibe.core.Schemas.Traits._
 import com.leobenkel.vibe.core.Services.Database
 import com.leobenkel.vibe.core.Utils.Log
 import com.leobenkel.vibe.core.Utils.SchemaTypes.TABLE_NAME
-import com.leobenkel.vibe.server.Messages.MessageSerializer
+import com.leobenkel.vibe.server.Messages.{MessageSerializer, ToMessage}
 import com.leobenkel.vibe.server.Routes.Utils.RoutePutSchema.ZCREATE
 import com.leobenkel.vibe.server.Utils.MarshallerWrap
 import io.circe.Encoder
@@ -31,38 +30,70 @@ trait RoutePutSchema[PK, ROW <: SchemaT[PK, ROW], INPUT] extends RouteTrait {
 
   protected type Z_CREATE = ZCREATE[PK, ROW]
 
+  private val rejectionHandler: RejectionHandler = RejectionHandler
+    .newBuilder()
+    .handle {
+      case missing: MissingFormFieldRejection =>
+        ToMessage.makeError(
+          statusCodes = StatusCodes.NotAcceptable,
+          message = _ => s"Form is missing field: '${missing.fieldName}'"
+        )
+      case malformed: MalformedFormFieldRejection =>
+        ToMessage.makeError(
+          statusCodes = StatusCodes.NotAcceptable,
+          message = _ =>
+            s"Form is malformed for field: '${malformed.fieldName}': " +
+              s"${malformed.errorMsg}"
+        )
+    }
+    .handleAll { errors: Seq[Rejection] =>
+      ToMessage.makeError(
+        statusCodes = StatusCodes.NotAcceptable,
+        message = _ => errors.map(_.toString).mkString(", ")
+      )
+    }
+    .result()
+
   final override def route: Route = {
     path(url) {
       (put | post) {
-        httpCreateSchemaForm().tapply { a =>
-          complete {
-            implicit val c: ClassTag[ROW] = tag
-            implicit val e: Encoder[ROW] = encoder
-            implicit val m: Marshaller[Task[(ROW, Boolean)], HttpResponse] =
-              MarshallerWrap.boolean[ROW](
-                operation = getFullUrl,
-                tableName = tableName,
-                fieldName = "created",
-                missingErrorMessage = s"Cannot create '$tableName'"
-              )
+        handleRejections(rejectionHandler) {
+          httpCreateSchemaForm
+            .tapply { a =>
+              complete {
+                implicit val c: ClassTag[ROW] = tag
+                implicit val e: Encoder[ROW] = encoder
+                implicit val m: Marshaller[Task[(ROW, Boolean)], HttpResponse] =
+                  MarshallerWrap.boolean[ROW](
+                    operation = getFullUrl,
+                    tableName = tableName,
+                    fieldName = "created",
+                    missingErrorMessage = s"Cannot create '$tableName'"
+                  )
 
-            (for {
-              newItem <- make(a)
-              b <- newItem
-                .save().fold(
-                  ex => Log(s"Failed to insert record: ${ex.toString}").map(_ => false),
-                  _ => UIO(true)
-                ).flatten
-            } yield {
-              newItem -> b
-            }).provide(environment)
-          }
+                (for {
+                  _ <- Log(
+                    s"[HTTP][${method.name()}] hitting '$getFullUrl' " +
+                      s"- Table: ${getTableRef.getTableName}"
+                  )
+                  newItem <- make(a)
+                  b <- newItem
+                    .save()
+                    .fold(
+                      ex => Log(s"Failed to insert record: ${ex.toString}").map(_ => false),
+                      _ => UIO(true)
+                    ).flatten
+                } yield {
+                  newItem -> b
+                }).provide(environment)
+              }
+            }
         }
       }
     } ~ super.route
   }
 
-  protected def httpCreateSchemaForm(): Directive[INPUT]
+  protected def httpCreateSchemaForm: Directive[INPUT]
 
   protected def make(i: INPUT): Z_CREATE
 
@@ -84,7 +115,8 @@ object RoutePutSchema {
       lazy final override protected val encoder: Encoder[ROW] = self.encoder
       lazy final override protected val tag:     ClassTag[ROW] = self.tag
 
-      override protected def httpCreateSchemaForm(): Directive[INPUT] = self.httpCreateSchemaForm()
+      lazy final override protected val httpCreateSchemaForm: Directive[INPUT] =
+        self.httpCreateSchemaForm
       override protected def make(i: INPUT): Z_CREATE = self.make(i)
     }
 }

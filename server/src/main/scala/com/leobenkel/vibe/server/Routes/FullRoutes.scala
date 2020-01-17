@@ -30,7 +30,7 @@ trait FullRoutes
 //  private val runtime: DefaultRuntime = new DefaultRuntime() {}
   protected def env: Any with Database with Console with Clock with Random
   private val self:             FullRoutes = this
-  private val log:              LoggingAdapter = Logging.getLogger(actor.actorSystem, this)
+//  private val log:              LoggingAdapter = Logging.getLogger(actor.actorSystem, this)
   private val staticContentDir: String = config.getLocalString("staticContentDir")
 
   override private[Routes] val getChildRoute: Seq[RouteTrait] = Seq(
@@ -44,22 +44,16 @@ trait FullRoutes
 
   lazy private val rejectionHandler: RejectionHandler =
     RejectionHandler
-      .newBuilder().handleNotFound { request =>
-        request.complete {
-          val url = request.unmatchedPath.toString
-          HttpResponse.apply(
-            status = StatusCodes.NotFound,
-            headers = Nil,
-            entity = HttpEntity.apply(
-              ContentTypes.`application/json`,
-              ToMessage.ErrorMessage(url)(s"Path '$url' not found!").toJsonString
-            )
-          )
-        }
+      .newBuilder().handleNotFound {
+        ToMessage.makeError(
+          url = r => ToMessage.Url(r.unmatchedPath.toString),
+          statusCodes = StatusCodes.NotFound,
+          message = url => s"Path $url not found!"
+        )
       }
       .result()
 
-  override val route: Route = DebuggingDirectives.logRequest("Request") {
+  lazy final override val route: Route = DebuggingDirectives.logRequest("Request") {
     handleRejections(rejectionHandler) {
       ignoreTrailingSlash(getChildRoute.map(_.route).reduce(_ ~ _))
     }

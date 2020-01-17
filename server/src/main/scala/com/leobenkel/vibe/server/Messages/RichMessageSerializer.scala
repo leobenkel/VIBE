@@ -2,7 +2,7 @@ package com.leobenkel.vibe.server.Messages
 
 import akka.http.scaladsl.marshalling._
 import akka.http.scaladsl.model.StatusCodes
-import com.leobenkel.vibe.core.Messages.MessageWithContent
+import com.leobenkel.vibe.core.Messages.{MessageWithContent, MessageWithContentForJson}
 import io.circe.syntax._
 import io.circe.{Encoder, Json}
 
@@ -10,8 +10,8 @@ trait RichMessageSerializer[A] extends MessageWithContent[A] with MessageSeriali
 
   def encodeA: Encoder[A]
 
-  implicit private val encodeResult: Encoder[MessageWithContentForJson] =
-    Encoder.forProduct4[MessageWithContentForJson, String, Boolean, Option[String], Json](
+  implicit private val encodeResult: Encoder[MessageWithContentForJson[A]] =
+    Encoder.forProduct4[MessageWithContentForJson[A], String, Boolean, Option[String], Json](
       "operation",
       "success",
       "errorMessage",
