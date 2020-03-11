@@ -10,7 +10,7 @@
 
 # VIBE
 
-// TODO: Intro
+VIBE is a platform where you can post ideas, tag them ( ie : Hackathon 2020, backend, product-platform ), then vote up/down, comment, add descriptions, images, and ultimately enroll to work on those projects.
 
 ## Table of Contents
 
